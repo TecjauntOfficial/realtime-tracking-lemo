@@ -1,6 +1,6 @@
 // testClient.js
 const io = require('socket.io-client');
-const socket = io('http://localhost:3000');
+const socket = io('http://54.82.13.151:3000');
 
 function generateLocation(baseLocation) {
     return {
@@ -11,7 +11,7 @@ function generateLocation(baseLocation) {
 
 const driverId = 'driver234';
 const baseLocation = { latitude: 40.7128, longitude: -74.0060 };
-let updateCount = 0;
+let updateCount = 0;    
 
 // Connect and start updates
 socket.on('connect', () => {

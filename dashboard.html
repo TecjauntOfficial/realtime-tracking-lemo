@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Previous head content remains same until style section -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Event Monitor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
+    <style>
+        /* Previous styles remain the same */
+        .event-monitor {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            padding: 5px;
+            border-left: 3px solid;
+            margin-bottom: 5px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .event-connect { border-color: #00ff00; }
+        .event-disconnect { border-color: #ff0000; }
+        .event-location { border-color: #00ffff; }
+        .event-tracking { border-color: #ffff00; }
+        .event-error { border-color: #ff6b6b; }
+        .event-other { border-color: #ff00ff; }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .raw-data {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .status-connected {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+        }
+
+        .status-disconnected {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff0000;
+        }
+
+        .event-count {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        .debug-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="connectionStatus" class="connection-status">Connecting...</div>
+    
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="text-center mb-4">Socket.IO Event Monitor</h1>
+            </div>
+        </div>
+
+        <!-- Real-time Event Monitor -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="glass-card">
+                    <h5>Real-time Event Monitor</h5>
+                    <div class="event-count">Total Events: <span id="totalEvents">0</span></div>
+                    <div id="eventMonitor" class="event-monitor"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="glass-card stats-card">
+                    <h5>Connection Events</h5>
+                    <h2 id="connectEvents">0</h2>
+                    <small>Connects/Disconnects</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card stats-card">
+                    <h5>Location Updates</h5>
+                    <h2 id="locationEvents">0</h2>
+                    <small>Driver locations</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card stats-card">
+                    <h5>Tracking Events</h5>
+                    <h2 id="trackingEvents">0</h2>
+                    <small>Start/Stop tracking</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card stats-card">
+                    <h5>Other Events</h5>
+                    <h2 id="otherEvents">0</h2>
+                    <small>Miscellaneous events</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div id="debugPanel" class="debug-panel">
+            <h6>Debug Information</h6>
+            <div id="debugInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        let eventCounts = {
+            connect: 0,
+            location: 0,
+            tracking: 0,
+            other: 0,
+            total: 0
+        };
+
+        const socket = io('http://54.82.13.151:3000', {
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            randomizationFactor: 0.5,
+        });
+
+        function updateConnectionStatus(status, details = '') {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.className = 'connection-status ' + 
+                (status === 'connected' ? 'status-connected' : 'status-disconnected');
+            statusDiv.textContent = `${status.toUpperCase()} ${details}`;
+        }
+
+        function addEventToMonitor(type, data, color = '#ffffff') {
+            const monitor = document.getElementById('eventMonitor');
+            const event = document.createElement('div');
+            event.className = `event-item event-${type}`;
+            
+            const timestamp = new Date().toISOString();
+            const dataStr = data ? JSON.stringify(data) : '';
+            
+            event.innerHTML = `
+                <strong style="color: ${color}">${type.toUpperCase()}</strong>
+                <span>[${timestamp}]</span>
+                ${data ? `<div class="raw-data">${dataStr}</div>` : ''}
+            `;
+            
+            monitor.insertBefore(event, monitor.firstChild);
+            if (monitor.children.length > 100) {
+                monitor.removeChild(monitor.lastChild);
+            }
+
+            // Update counts
+            eventCounts.total++;
+            switch(type) {
+                case 'connect':
+                case 'disconnect':
+                    eventCounts.connect++;
+                    break;
+                case 'location':
+                    eventCounts.location++;
+                    break;
+                case 'tracking':
+                    eventCounts.tracking++;
+                    break;
+                default:
+                    eventCounts.other++;
+            }
+            
+            updateEventCounts();
+        }
+
+        function updateEventCounts() {
+            document.getElementById('totalEvents').textContent = eventCounts.total;
+            document.getElementById('connectEvents').textContent = eventCounts.connect;
+            document.getElementById('locationEvents').textContent = eventCounts.location;
+            document.getElementById('trackingEvents').textContent = eventCounts.tracking;
+            document.getElementById('otherEvents').textContent = eventCounts.other;
+        }
+
+        function updateDebugInfo(info) {
+            document.getElementById('debugInfo').innerHTML = `
+                <div>Last Event: ${info.lastEvent || 'None'}</div>
+                <div>Socket ID: ${socket.id || 'Not connected'}</div>
+                <div>Connected: ${socket.connected}</div>
+            `;
+        }
+
+        // Socket event listeners
+        socket.on('connect', () => {
+            updateConnectionStatus('connected', `(ID: ${socket.id})`);
+            addEventToMonitor('connect', { socketId: socket.id }, '#00ff00');
+        });
+
+        socket.on('disconnect', (reason) => {
+            updateConnectionStatus('disconnected', `(${reason})`);
+            addEventToMonitor('disconnect', { reason }, '#ff0000');
+        });
+
+        socket.on('connect_error', (error) => {
+            updateConnectionStatus('error', error.message);
+            addEventToMonitor('error', { message: error.message }, '#ff6b6b');
+        });
+
+        socket.on('locationUpdate', (data) => {
+            addEventToMonitor('location', data, '#00ffff');
+            updateDebugInfo({ lastEvent: 'locationUpdate' });
+        });
+
+        socket.on('trackDriver', (data) => {
+            addEventToMonitor('tracking', { action: 'start', driverId: data }, '#ffff00');
+            updateDebugInfo({ lastEvent: 'trackDriver' });
+        });
+
+        socket.on('stopTracking', (data) => {
+            addEventToMonitor('tracking', { action: 'stop', driverId: data }, '#ffff00');
+            updateDebugInfo({ lastEvent: 'stopTracking' });
+        });
+
+        // Catch all other events
+        const originalOnevent = socket.onevent;
+        socket.onevent = function(packet) {
+            const eventName = packet.data[0];
+            const eventData = packet.data[1];
+            
+            // Don't log already handled events
+            if (!['connect', 'disconnect', 'locationUpdate', 'trackDriver', 'stopTracking'].includes(eventName)) {
+                addEventToMonitor('other', { event: eventName, data: eventData }, '#ff00ff');
+            }
+            
+            originalOnevent.call(this, packet);
+        };
+
+        // Update debug info periodically
+        setInterval(() => {
+            updateDebugInfo({
+                lastEvent: 'heartbeat',
+                timestamp: new Date().toISOString()
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
