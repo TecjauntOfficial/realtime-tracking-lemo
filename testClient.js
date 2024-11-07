@@ -1,6 +1,6 @@
 // testClient.js
 const io = require('socket.io-client');
-const socket = io('http://localhost:3000');
+const socket = io('http://54.82.13.151:3000');
 
 function generateLocation(baseLocation) {
     return {
