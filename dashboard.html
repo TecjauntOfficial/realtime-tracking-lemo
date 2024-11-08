@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Limo</title>
+    <title>Limo Dashboard</title>
     <style>
         :root {
             --primary: #ff6b35;
@@ -14,6 +14,7 @@
             --card: #ffffff;
             --success: #4caf50;
             --warning: #ff9800;
+            --error: #f44336;
         }
 
         * {
@@ -41,6 +42,21 @@
             margin-bottom: 20px;
             color: white;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .connection-status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .connected {
+            background-color: var(--success);
+        }
+
+        .disconnected {
+            background-color: var(--error);
         }
 
         .stats {
@@ -161,6 +177,15 @@
         #clear-logs:hover {
             background-color: var(--primary-light);
         }
+
+        .error-message {
+            background-color: #ffebee;
+            color: var(--error);
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -168,7 +193,10 @@
         <div class="header">
             <h1>Limo Ride Sharing App</h1>
             <p>Monitoring server events and communications</p>
+            <div id="connection-status" class="connection-status disconnected">Disconnected</div>
         </div>
+
+        <div id="error-message" class="error-message"></div>
 
         <div class="stats">
             <div class="stat-card">
@@ -207,43 +235,40 @@
             sent: 0,
             connections: 0
         };
-    
-        // Get the server URL dynamically
-        const serverUrl = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000' 
-            : `http://${window.location.hostname}:3000`;
-    
-        console.log('Connecting to server at:', serverUrl);
-    
+
         // Initialize socket with proper configuration
-        const socket = io(serverUrl, {
+        const socket = io({
             transports: ['websocket', 'polling'],
             reconnectionAttempts: 5,
             reconnectionDelay: 1000
         });
-    
-        // Single connection handler
+
+        // Connection handling
         socket.on('connect', () => {
             console.log('Connected to server with ID:', socket.id);
-            stats.connections++;
-            updateStats();
-            
-            // Join dashboard room after connection
+            updateConnectionStatus(true);
             socket.emit('joinDashboard');
             console.log('Joined dashboard room');
         });
-    
+
         socket.on('connect_error', (error) => {
             console.error('Connection error:', error);
+            updateConnectionStatus(false);
+            showError('Unable to connect to server. Retrying...');
         });
-    
+
         socket.on('disconnect', (reason) => {
             console.log('Disconnected:', reason);
-            stats.connections = Math.max(0, stats.connections - 1);
+            updateConnectionStatus(false);
+            showError('Disconnected from server: ' + reason);
+        });
+
+        socket.on('connectionCount', (count) => {
+            stats.connections = count;
             updateStats();
         });
-    
-        // Debug logging for events
+
+        // Event handling
         socket.on('event', (message) => {
             console.log('Received event:', message);
             
@@ -252,19 +277,40 @@
             if (message.direction === 'received') stats.received++;
             if (message.direction === 'sent') stats.sent++;
             updateStats();
-    
+
             // Create and add event card
             const eventLog = document.getElementById('event-log');
             const card = createEventCard(message);
             eventLog.insertBefore(card, eventLog.firstChild);
-    
+
             // Limit number of visible events
             if (eventLog.children.length > 100) {
                 eventLog.removeChild(eventLog.lastChild);
             }
         });
-    
-        // Format timestamp
+
+        // Error handling
+        socket.on('error', (error) => {
+            console.error('Socket error:', error);
+            showError('Error: ' + (error.message || 'Unknown error occurred'));
+        });
+
+        // Helper functions
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connection-status');
+            statusElement.textContent = connected ? 'Connected' : 'Disconnected';
+            statusElement.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+
         function formatTime(timestamp) {
             return new Date(timestamp).toLocaleTimeString('en-US', {
                 hour12: false,
@@ -273,8 +319,7 @@
                 second: '2-digit'
             });
         }
-    
-        // Create event card
+
         function createEventCard(message) {
             const card = document.createElement('div');
             card.className = `event-card ${message.direction}`;
@@ -288,18 +333,17 @@
                 <div>Socket ID: ${message.socketId}</div>
                 <div class="event-details">${JSON.stringify(message.data, null, 2)}</div>
             `;
-    
+
             return card;
         }
-    
-        // Update stats display
+
         function updateStats() {
             document.getElementById('total-events').textContent = stats.total;
             document.getElementById('received-events').textContent = stats.received;
             document.getElementById('sent-events').textContent = stats.sent;
             document.getElementById('active-connections').textContent = stats.connections;
         }
-    
+
         // Clear logs button
         document.getElementById('clear-logs').addEventListener('click', () => {
             document.getElementById('event-log').innerHTML = '';
