@@ -41,7 +41,6 @@ socket.on('connect', () => {
     });
 });
 
-// Function to send location updates
 function sendLocationUpdate() {
     updateCount++;
     const location = generateLocation(baseLocation);
@@ -57,9 +56,9 @@ function sendLocationUpdate() {
     console.log(`[${updateData.timestamp}] Update #${updateCount} sent:`, location);
 }
 
-// Listen for locationUpdate broadcasts from the server
+// Listen for broadcasts
 socket.on('locationUpdate', (data) => {
-    console.log(`[${data.timestamp}] Received broadcast location update:`, data.location);
+    console.log(`[${data.timestamp}] Received broadcast:`, data.location);
 });
 
 // Error handling
