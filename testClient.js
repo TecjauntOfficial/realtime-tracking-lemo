@@ -40,6 +40,7 @@ function sendLocationUpdate() {
 }
 
 // Listen for broadcasts
+// In testClient.js
 socket.on('locationUpdate', (data) => {
     console.log(`[${data.timestamp}] Received broadcast:`, data.location);
 });
