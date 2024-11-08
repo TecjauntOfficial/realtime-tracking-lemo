@@ -1,6 +1,11 @@
-// testClient.js
 const io = require('socket.io-client');
-const socket = io('http://3.27.222.220:3000');
+
+// Connect to your server with proper options
+const socket = io('http://3.27.222.220:3000', {
+    transports: ['websocket', 'polling'],
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+});
 
 function generateLocation(baseLocation) {
     return {
@@ -17,12 +22,18 @@ let updateCount = 0;
 socket.on('connect', () => {
     console.log('\n=== Connected to server ===\n');
     
+    // Join tracking room
     socket.emit('trackDriver', driverId);
     console.log(`Tracking started for Driver ${driverId}\n`);
     
     // Start periodic updates
     sendLocationUpdate(); // Send first update immediately
-    setInterval(sendLocationUpdate, 3000); // Then every 3 seconds
+    const intervalId = setInterval(sendLocationUpdate, 3000); // Then every 3 seconds
+
+    // Clear interval on disconnect
+    socket.on('disconnect', () => {
+        clearInterval(intervalId);
+    });
 });
 
 function sendLocationUpdate() {
@@ -32,11 +43,12 @@ function sendLocationUpdate() {
     const updateData = {
         driverId,
         location,
-        updateCount
+        updateCount,
+        timestamp: new Date().toISOString()
     };
     
     socket.emit('driverLocation', updateData);
-    console.log(`[${new Date().toISOString()}] Update #${updateCount} sent:`, location);
+    console.log(`[${updateData.timestamp}] Update #${updateCount} sent:`, location);
 }
 
 // Listen for broadcasts

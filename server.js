@@ -6,8 +6,15 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
 
+
+
+const io = socketIo(server, {
+    cors: {
+        origin: "*",  // In production, specify your actual domains
+        methods: ["GET", "POST"]
+    }
+});
 // Redis setup with async connection
 const redisClient = redis.createClient({
     url: 'redis://localhost:6379'

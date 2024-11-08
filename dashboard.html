@@ -209,7 +209,27 @@
         };
 
         // Connect to the Socket.io server
-        const socket = io('http://3.27.222.220:3000');
+        // const socket = io('http://3.27.222.220:3000');
+        // Instead of hardcoding the IP, use relative path
+            const socket = io({
+                transports: ['websocket', 'polling'],
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000
+            });
+
+            // Add connection status logging
+            socket.on('connect', () => {
+                console.log('Connected to server');
+                socket.emit('joinDashboard');
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('Connection error:', error);
+            });
+
+            socket.on('disconnect', (reason) => {
+                console.log('Disconnected:', reason);
+            });
 
         // Join the dashboard room
         socket.emit('joinDashboard');
