@@ -28,69 +28,42 @@ const redisClient = redis.createClient({
     }
 })();
 
-// Middleware to serve static files
+// Serve static files if needed
 app.use(express.static(path.join(__dirname)));
-app.use(express.json());
 
-// Basic routes
-app.get('/', (req, res) => {
-    res.send('Server is running');
-});
-
+// Basic health check endpoint
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok' });
+    res.send({ status: 'ok' });
 });
 
-// Dashboard route
+// Dashboard route for serving HTML file
 app.get('/dashboard', (req, res) => {
-    console.log('Dashboard requested');
-    console.log('Current directory:', __dirname);
-    console.log('Attempting to serve:', path.join(__dirname, 'dashboard.html'));
-    
     res.sendFile(path.join(__dirname, 'dashboard.html'), (err) => {
         if (err) {
-            console.error('Error sending file:', err);
+            console.error('Error loading dashboard:', err);
             res.status(500).send('Error loading dashboard');
         }
     });
 });
 
-// Socket.IO connection handling
 io.on('connection', (socket) => {
-    // Log connection info
-    console.log('\n=== New Client Connected ===');
-    console.log('Socket ID:', socket.id);
-    console.log('Active rooms:', io.sockets.adapter.rooms);
-    console.log('Total connected clients:', io.engine.clientsCount);
-    console.log('============================\n');
+    console.log('Client connected:', socket.id);
 
     // Handle driver location updates
     socket.on('driverLocation', async (data) => {
         try {
             const { driverId, location, updateCount } = data;
-            
-            // Log detailed update information
-            console.log(`\n[${new Date().toISOString()}] Processing location update:`);
-            console.log('Driver ID:', driverId);
-            console.log('Update count:', updateCount);
-            console.log('Location:', location);
-            console.log('Connected sockets in room:', io.sockets.adapter.rooms.get(`ride:${driverId}`)?.size || 0);
+            console.log(`[${new Date().toISOString()}] Update #${updateCount || 'N/A'} from ${driverId}:`, location);
 
             // Save to Redis
             await redisClient.set(`driver:${driverId}`, JSON.stringify(location));
             
-            // Broadcast to specific room/channel
-            const roomName = `ride:${driverId}`;
-            const result = io.to(roomName).emit('locationUpdate', {
+            // Broadcast location update to specific driver's tracking room
+            io.to(`ride:${driverId}`).emit('locationUpdate', {
                 driverId,
                 location,
                 timestamp: new Date().toISOString()
             });
-            
-            // Log broadcast results
-            console.log('Broadcast result:', result);
-            console.log('Room name:', roomName);
-            console.log('Sockets in room:', io.sockets.adapter.rooms.get(roomName)?.size || 0);
 
             // Emit event to dashboard
             io.to('dashboard').emit('event', {
@@ -111,57 +84,26 @@ io.on('connection', (socket) => {
 
     // Join specific driver's tracking room
     socket.on('trackDriver', (driverId) => {
-        const roomName = `ride:${driverId}`;
-        socket.join(roomName);
-        console.log(`\nSocket ${socket.id} joined room: ${roomName}`);
-        console.log('Sockets in room:', io.sockets.adapter.rooms.get(roomName)?.size || 0);
-
-        io.to('dashboard').emit('event', {
-            direction: 'received',
-            event: 'trackDriver',
-            data: { driverId },
-            socketId: socket.id,
-            timestamp: new Date().toISOString()
-        });
+        socket.join(`ride:${driverId}`);
+        console.log(`Socket ${socket.id} joined room: ride:${driverId}`);
     });
 
     // Leave tracking room
     socket.on('stopTracking', (driverId) => {
-        const roomName = `ride:${driverId}`;
-        socket.leave(roomName);
-        console.log(`\nSocket ${socket.id} left room: ${roomName}`);
-        console.log('Sockets in room:', io.sockets.adapter.rooms.get(roomName)?.size || 0);
-
-        io.to('dashboard').emit('event', {
-            direction: 'received',
-            event: 'stopTracking',
-            data: { driverId },
-            socketId: socket.id,
-            timestamp: new Date().toISOString()
-        });
+        socket.leave(`ride:${driverId}`);
+        console.log(`Socket ${socket.id} left room: ride:${driverId}`);
     });
 
     // Join dashboard room
     socket.on('joinDashboard', () => {
         socket.join('dashboard');
-        console.log(`\nSocket ${socket.id} joined the dashboard room`);
-        console.log('Sockets in dashboard:', io.sockets.adapter.rooms.get('dashboard')?.size || 0);
-        
-        io.to('dashboard').emit('event', {
-            direction: 'received',
-            event: 'dashboardConnected',
-            data: { message: 'Dashboard connected successfully' },
-            socketId: socket.id,
-            timestamp: new Date().toISOString()
-        });
+        console.log(`Socket ${socket.id} joined the dashboard room`);
     });
 
-    // Middleware for logging all events
+    // Middleware for logging all events to the dashboard
     socket.use((packet, next) => {
         const [eventName, eventData] = packet;
         
-        console.log(`\nEvent received: ${eventName}`, eventData);
-
         io.to('dashboard').emit('event', {
             direction: 'received',
             event: eventName,
@@ -173,34 +115,12 @@ io.on('connection', (socket) => {
         next();
     });
 
-    // Handle disconnection
     socket.on('disconnect', () => {
-        console.log('\n=== Client Disconnected ===');
-        console.log('Socket ID:', socket.id);
-        console.log('Remaining clients:', io.engine.clientsCount);
-        console.log('==========================\n');
+        console.log('Client disconnected:', socket.id);
     });
 });
 
-// Error handling for the server
-server.on('error', (error) => {
-    console.error('Server error:', error);
-});
-
-// Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log('\n=== Server Started ===');
     console.log(`Server running on port ${PORT}`);
-    console.log(`Dashboard available at http://localhost:${PORT}/dashboard`);
-    console.log('====================\n');
-});
-
-// Handle process termination
-process.on('SIGTERM', () => {
-    console.log('\nSIGTERM received. Closing server...');
-    server.close(() => {
-        console.log('Server closed.');
-        process.exit(0);
-    });
 });

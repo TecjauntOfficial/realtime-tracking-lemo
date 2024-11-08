@@ -567,19 +567,23 @@ body {
 
         // Socket event handling
         socket.on('connect', () => {
-            updateConnectionStatus(true);
-            socket.emit('joinDashboard');
-        });
+    console.log('Dashboard client connected to server');
+    socket.emit('joinDashboard');
+});
 
-        socket.on('disconnect', () => {
-            updateConnectionStatus(false);
-        });
+// Listen for events
+socket.on('event', (data) => {
+    console.log(`[${data.timestamp}] Event received on dashboard:`, data);
+});
 
-        socket.on('event', (message) => {
-            processEvent(message);
-            updateDashboard();
-        });
+// Error handling
+socket.on('connect_error', (error) => {
+    console.error('Connection error:', error.message);
+});
 
+socket.on('disconnect', () => {
+    console.log('Dashboard client disconnected');
+});
         // Event processing
         function processEvent(message) {
             // Update event counts
