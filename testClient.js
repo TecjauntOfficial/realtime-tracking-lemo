@@ -1,11 +1,6 @@
+// testClient.js
 const io = require('socket.io-client');
-
-// Connect to your server with proper options
-const socket = io('http://3.27.222.220:3000', {
-    transports: ['websocket', 'polling'],
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000
-});
+const socket = io('http://localhost:3000');
 
 function generateLocation(baseLocation) {
     return {
@@ -14,31 +9,20 @@ function generateLocation(baseLocation) {
     };
 }
 
-const driverId = 'driver12123213123214';
+const driverId = 'driver234';
 const baseLocation = { latitude: 40.7128, longitude: -74.0060 };
 let updateCount = 0;
-
-// Debug logging for all events
-socket.onAny((eventName, ...args) => {
-    console.log(`\nReceived event "${eventName}":`, JSON.stringify(args, null, 2));
-});
 
 // Connect and start updates
 socket.on('connect', () => {
     console.log('\n=== Connected to server ===\n');
     
-    // Join tracking room for the same driver to receive updates
     socket.emit('trackDriver', driverId);
     console.log(`Tracking started for Driver ${driverId}\n`);
     
-    // Start sending updates as our driver
+    // Start periodic updates
     sendLocationUpdate(); // Send first update immediately
-    const intervalId = setInterval(sendLocationUpdate, 3000); // Every 3 seconds
-
-    // Clear interval on disconnect
-    socket.on('disconnect', () => {
-        clearInterval(intervalId);
-    });
+    setInterval(sendLocationUpdate, 3000); // Then every 3 seconds
 });
 
 function sendLocationUpdate() {
@@ -48,12 +32,11 @@ function sendLocationUpdate() {
     const updateData = {
         driverId,
         location,
-        updateCount,
-        timestamp: new Date().toISOString()
+        updateCount
     };
     
     socket.emit('driverLocation', updateData);
-    console.log(`[${updateData.timestamp}] Update #${updateCount} sent:`, location);
+    console.log(`[${new Date().toISOString()}] Update #${updateCount} sent:`, location);
 }
 
 // Listen for broadcasts
