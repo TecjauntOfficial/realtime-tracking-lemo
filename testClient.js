@@ -14,21 +14,28 @@ function generateLocation(baseLocation) {
     };
 }
 
+// Test as both driver and tracker
 const driverId = 'driver12123213123214';
 const baseLocation = { latitude: 40.7128, longitude: -74.0060 };
 let updateCount = 0;
+
+// Debug logging for all events
+socket.onAny((eventName, ...args) => {
+    console.log(`\nReceived event "${eventName}":`, JSON.stringify(args, null, 2));
+});
 
 // Connect and start updates
 socket.on('connect', () => {
     console.log('\n=== Connected to server ===\n');
     
-    // Join tracking room
-    socket.emit('trackDriver', driverId);
-    console.log(`Tracking started for Driver ${driverId}\n`);
+    // Join tracking room for a different driver to test receiving
+    const differentDriverId = 'driver999';
+    socket.emit('trackDriver', differentDriverId);
+    console.log(`Tracking started for Driver ${differentDriverId}\n`);
     
-    // Start periodic updates
+    // Start sending updates as our driver
     sendLocationUpdate(); // Send first update immediately
-    const intervalId = setInterval(sendLocationUpdate, 500); // Then every 3 seconds
+    const intervalId = setInterval(sendLocationUpdate, 3000); // Every 3 seconds
 
     // Clear interval on disconnect
     socket.on('disconnect', () => {
@@ -51,18 +58,28 @@ function sendLocationUpdate() {
     console.log(`[${updateData.timestamp}] Update #${updateCount} sent:`, location);
 }
 
-// Listen for broadcasts
+// Listen for broadcasts with more detailed logging
 socket.on('locationUpdate', (data) => {
-    console.log(`[${data.timestamp}] Received broadcast:`, data.location);
+    console.log('\n=== Received Location Update ===');
+    console.log(`Driver: ${data.driverId}`);
+    console.log(`Location:`, data.location);
+    console.log(`Timestamp: ${data.timestamp}`);
+    console.log('===============================\n');
 });
 
-// Error handling
+// Enhanced error handling
 socket.on('connect_error', (error) => {
-    console.error('Connection error:', error.message);
+    console.error('\nConnection error:', error.message);
+    console.error('Error details:', error);
 });
 
-socket.on('disconnect', () => {
-    console.log('\n=== Disconnected from server ===\n');
+socket.on('error', (error) => {
+    console.error('\nSocket error:', error);
+});
+
+socket.on('disconnect', (reason) => {
+    console.log('\n=== Disconnected from server ===');
+    console.log('Reason:', reason, '\n');
 });
 
 // Clean shutdown
