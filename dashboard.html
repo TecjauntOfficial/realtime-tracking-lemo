@@ -207,41 +207,63 @@
             sent: 0,
             connections: 0
         };
-
-        // Connect to the Socket.io server
-        // const socket = io('http://3.27.222.220:3000');
-        // Instead of hardcoding the IP, use relative path
-            const socket = io({
-                transports: ['websocket', 'polling'],
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000
-            });
-
-            // Add connection status logging
-            socket.on('connect', () => {
-                console.log('Connected to server');
-                socket.emit('joinDashboard');
-            });
-
-            socket.on('connect_error', (error) => {
-                console.error('Connection error:', error);
-            });
-
-            socket.on('disconnect', (reason) => {
-                console.log('Disconnected:', reason);
-            });
-
-        // Join the dashboard room
-        socket.emit('joinDashboard');
-
-        // Update stats display
-        function updateStats() {
-            document.getElementById('total-events').textContent = stats.total;
-            document.getElementById('received-events').textContent = stats.received;
-            document.getElementById('sent-events').textContent = stats.sent;
-            document.getElementById('active-connections').textContent = stats.connections;
-        }
-
+    
+        // Get the server URL dynamically
+        const serverUrl = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : `http://${window.location.hostname}:3000`;
+    
+        console.log('Connecting to server at:', serverUrl);
+    
+        // Initialize socket with proper configuration
+        const socket = io(serverUrl, {
+            transports: ['websocket', 'polling'],
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000
+        });
+    
+        // Single connection handler
+        socket.on('connect', () => {
+            console.log('Connected to server with ID:', socket.id);
+            stats.connections++;
+            updateStats();
+            
+            // Join dashboard room after connection
+            socket.emit('joinDashboard');
+            console.log('Joined dashboard room');
+        });
+    
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+        });
+    
+        socket.on('disconnect', (reason) => {
+            console.log('Disconnected:', reason);
+            stats.connections = Math.max(0, stats.connections - 1);
+            updateStats();
+        });
+    
+        // Debug logging for events
+        socket.on('event', (message) => {
+            console.log('Received event:', message);
+            
+            // Update stats
+            stats.total++;
+            if (message.direction === 'received') stats.received++;
+            if (message.direction === 'sent') stats.sent++;
+            updateStats();
+    
+            // Create and add event card
+            const eventLog = document.getElementById('event-log');
+            const card = createEventCard(message);
+            eventLog.insertBefore(card, eventLog.firstChild);
+    
+            // Limit number of visible events
+            if (eventLog.children.length > 100) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        });
+    
         // Format timestamp
         function formatTime(timestamp) {
             return new Date(timestamp).toLocaleTimeString('en-US', {
@@ -251,7 +273,7 @@
                 second: '2-digit'
             });
         }
-
+    
         // Create event card
         function createEventCard(message) {
             const card = document.createElement('div');
@@ -266,29 +288,18 @@
                 <div>Socket ID: ${message.socketId}</div>
                 <div class="event-details">${JSON.stringify(message.data, null, 2)}</div>
             `;
-
+    
             return card;
         }
-
-        // Listen for events
-        socket.on('event', (message) => {
-            // Update stats
-            stats.total++;
-            if (message.direction === 'received') stats.received++;
-            if (message.direction === 'sent') stats.sent++;
-            updateStats();
-
-            // Create and add event card
-            const eventLog = document.getElementById('event-log');
-            const card = createEventCard(message);
-            eventLog.insertBefore(card, eventLog.firstChild);
-
-            // Limit number of visible events to prevent browser slowdown
-            if (eventLog.children.length > 100) {
-                eventLog.removeChild(eventLog.lastChild);
-            }
-        });
-
+    
+        // Update stats display
+        function updateStats() {
+            document.getElementById('total-events').textContent = stats.total;
+            document.getElementById('received-events').textContent = stats.received;
+            document.getElementById('sent-events').textContent = stats.sent;
+            document.getElementById('active-connections').textContent = stats.connections;
+        }
+    
         // Clear logs button
         document.getElementById('clear-logs').addEventListener('click', () => {
             document.getElementById('event-log').innerHTML = '';
@@ -298,17 +309,6 @@
                 sent: 0,
                 connections: stats.connections
             };
-            updateStats();
-        });
-
-        // Connection handling
-        socket.on('connect', () => {
-            stats.connections++;
-            updateStats();
-        });
-
-        socket.on('disconnect', () => {
-            stats.connections--;
             updateStats();
         });
     </script>
