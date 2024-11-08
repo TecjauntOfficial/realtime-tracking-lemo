@@ -1,6 +1,6 @@
 const io = require('socket.io-client');
 
-// Connect to the server with proper options
+// Connect to your server with proper options
 const socket = io('http://3.27.222.220:3000', {
     transports: ['websocket', 'polling'],
     reconnectionAttempts: 5,
@@ -31,11 +31,6 @@ socket.on('connect', () => {
     socket.emit('trackDriver', driverId);
     console.log(`Tracking started for Driver ${driverId}\n`);
     
-    // Listen for location updates from the server
-    socket.on('locationUpdate', (data) => {
-        console.log(`[${data.timestamp}] Received location update for Driver ${data.driverId}:`, data.location);
-    });
-
     // Start sending updates as our driver
     sendLocationUpdate(); // Send first update immediately
     const intervalId = setInterval(sendLocationUpdate, 3000); // Every 3 seconds
@@ -46,6 +41,7 @@ socket.on('connect', () => {
     });
 });
 
+// Function to send location updates
 function sendLocationUpdate() {
     updateCount++;
     const location = generateLocation(baseLocation);
@@ -60,6 +56,11 @@ function sendLocationUpdate() {
     socket.emit('driverLocation', updateData);
     console.log(`[${updateData.timestamp}] Update #${updateCount} sent:`, location);
 }
+
+// Listen for locationUpdate broadcasts from the server
+socket.on('locationUpdate', (data) => {
+    console.log(`[${data.timestamp}] Received broadcast location update:`, data.location);
+});
 
 // Error handling
 socket.on('connect_error', (error) => {

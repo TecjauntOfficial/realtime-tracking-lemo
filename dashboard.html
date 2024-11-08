@@ -566,7 +566,7 @@ body {
         }
 
         // Socket event handling
-        socket.on('connect', () => {
+       socket.on('connect', () => {
     console.log('Dashboard client connected to server');
     socket.emit('joinDashboard');
 });
