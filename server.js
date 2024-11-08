@@ -60,6 +60,69 @@ app.get('/dashboard', (req, res) => {
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
+    // Handle driver location updates
+    socket.on('driverLocation', async (data) => {
+        try {
+            const { driverId, location } = data;
+            console.log(`[${new Date().toISOString()}] Received update #${data.updateCount || 'N/A'} from ${driverId}:`, location);
+
+            // Save to Redis
+            await redisClient.set(`driver:${driverId}`, JSON.stringify(location));
+            
+            // Broadcast to specific room/channel
+            io.to(`ride:${driverId}`).emit('locationUpdate', {
+                driverId,
+                location,
+                timestamp: new Date().toISOString()
+            });
+
+            // Emit event to dashboard for sent data
+            io.to('dashboard').emit('event', {
+                direction: 'sent',
+                event: 'locationUpdate',
+                data: {
+                    driverId,
+                    location,
+                    timestamp: new Date().toISOString()
+                },
+                socketId: socket.id,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('Error handling location update:', error);
+        }
+    });
+
+    // Join specific driver's tracking room
+    socket.on('trackDriver', (driverId) => {
+        socket.join(`ride:${driverId}`);
+        console.log(`Socket ${socket.id} joined room: ride:${driverId}`);
+
+        // Emit event to dashboard
+        io.to('dashboard').emit('event', {
+            direction: 'received',
+            event: 'trackDriver',
+            data: { driverId },
+            socketId: socket.id,
+            timestamp: new Date().toISOString()
+        });
+    });
+
+    // Leave tracking room
+    socket.on('stopTracking', (driverId) => {
+        socket.leave(`ride:${driverId}`);
+        console.log(`Socket ${socket.id} left room: ride:${driverId}`);
+
+        // Emit event to dashboard
+        io.to('dashboard').emit('event', {
+            direction: 'received',
+            event: 'stopTracking',
+            data: { driverId },
+            socketId: socket.id,
+            timestamp: new Date().toISOString()
+        });
+    });
+
     socket.on('joinDashboard', () => {
         socket.join('dashboard');
         console.log(`Socket ${socket.id} joined the dashboard room`);

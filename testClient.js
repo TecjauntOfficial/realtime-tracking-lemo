@@ -14,7 +14,7 @@ function generateLocation(baseLocation) {
     };
 }
 
-const driverId = 'driver234';
+const driverId = 'driver12123213123214';
 const baseLocation = { latitude: 40.7128, longitude: -74.0060 };
 let updateCount = 0;
 
@@ -28,7 +28,7 @@ socket.on('connect', () => {
     
     // Start periodic updates
     sendLocationUpdate(); // Send first update immediately
-    const intervalId = setInterval(sendLocationUpdate, 3000); // Then every 3 seconds
+    const intervalId = setInterval(sendLocationUpdate, 500); // Then every 3 seconds
 
     // Clear interval on disconnect
     socket.on('disconnect', () => {
