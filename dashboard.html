@@ -9,50 +9,101 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <style>
-   /* Theme Variables */
+    /* Dashboard Theme Variables */
 :root {
-    --primary: #ff6b35;          /* Vibrant Orange */
-    --primary-light: #ff8c61;    /* Light Orange */
-    --primary-dark: #e85d2c;     /* Dark Orange */
-    --secondary: #ffd5c2;        /* Soft Peach */
-    --accent: #f7c59f;          /* Warm Peach */
-    --background: #fffaf7;       /* Off White */
-    --text: #2d3142;            /* Dark Blue-Grey */
-    --card: #ffffff;            /* Pure White */
-    --success: #2ecc71;         /* Green */
-    --warning: #f1c40f;         /* Yellow */
-    --error: #e74c3c;           /* Red */
-    --gradient-1: #ff6b35;      /* Start of gradient */
-    --gradient-2: #ff9255;      /* Middle of gradient */
-    --gradient-3: #ffb347;      /* End of gradient */
+    --primary: #4f46e5;
+    --primary-light: #818cf8;
+    --secondary: #e5e7eb;
+    --background: #f3f4f6;
+    --text: #1f2937;
+    --card: #ffffff;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --purple: #8b5cf6;
+    --blue: #3b82f6;
 }
 
-/* Apply gradients to specific elements */
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+}
+
+/* Layout */
+.dashboard {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
 .header {
-    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-3));
+    background: linear-gradient(135deg, var(--primary), var(--purple));
     padding: 24px;
     border-radius: 16px;
     margin-bottom: 24px;
     color: white;
-    box-shadow: 0 8px 16px rgba(255, 107, 53, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Filters Section */
+.filters-container {
+    background: var(--card);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 1px solid var(--secondary);
+    border-radius: 8px;
+    background: white;
+    color: var(--text);
+    cursor: pointer;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
 }
 
 .stat-card {
     background: var(--card);
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(255, 107, 53, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid rgba(255, 107, 53, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s;
+    border: 1px solid var(--secondary);
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 107, 53, 0.15);
 }
 
 .stat-icon {
-    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+    background: var(--primary-light);
     width: 40px;
     height: 40px;
     border-radius: 10px;
@@ -63,34 +114,67 @@
     margin-bottom: 12px;
 }
 
+.stat-title {
+    font-size: 0.875rem;
+    color: var(--text);
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text);
+}
+
+/* Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
 .chart-card {
     background: var(--card);
     padding: 24px;
     border-radius: 16px;
-    box-shadow: 0 4px 6px rgba(255, 107, 53, 0.1);
-    border: 1px solid rgba(255, 107, 53, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--secondary);
 }
 
-.chart-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 107, 53, 0.15);
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.clear-button {
-    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
 }
 
-.clear-button:hover {
-    background: linear-gradient(135deg, var(--gradient-2), var(--gradient-3));
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.2);
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+/* Socket Section */
+.socket-section {
+    background: var(--card);
+    padding: 24px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    border: 1px solid var(--secondary);
+}
+
+.socket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
 }
 
 .socket-card {
@@ -98,13 +182,26 @@
     padding: 16px;
     border-radius: 12px;
     border-left: 4px solid var(--primary);
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 4px rgba(255, 107, 53, 0.05);
+    transition: transform 0.2s;
 }
 
 .socket-card:hover {
     transform: translateX(4px);
-    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.1);
+}
+
+/* Events Section */
+.events-section {
+    background: var(--card);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid var(--secondary);
+}
+
+.events-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 .event-card {
@@ -113,85 +210,102 @@
     margin-bottom: 12px;
     border-radius: 12px;
     border-left: 4px solid var(--primary);
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 4px rgba(255, 107, 53, 0.05);
+    transition: transform 0.2s;
 }
 
 .event-card:hover {
     transform: translateX(4px);
-    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.1);
 }
 
-.connection-badge.connected {
-    background-color: rgba(46, 204, 113, 0.1);
+.event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* Status Badges */
+.connection-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.connected {
+    background-color: rgba(16, 185, 129, 0.1);
     color: var(--success);
-    border: 1px solid rgba(46, 204, 113, 0.2);
 }
 
-.connection-badge.disconnected {
-    background-color: rgba(231, 76, 60, 0.1);
+.disconnected {
+    background-color: rgba(239, 68, 68, 0.1);
     color: var(--error);
-    border: 1px solid rgba(231, 76, 60, 0.2);
 }
 
-/* Modified chart colors in JavaScript */
-.chart-colors {
-    --chart-orange-1: rgba(255, 107, 53, 0.8);
-    --chart-orange-2: rgba(255, 146, 85, 0.8);
-    --chart-orange-3: rgba(255, 179, 71, 0.8);
-    --chart-line: rgba(255, 107, 53, 1);
-    --chart-area: rgba(255, 107, 53, 0.1);
-}
-
-/* Filter styles */
-.filter-select {
-    padding: 8px 12px;
-    border: 1px solid var(--secondary);
+/* Buttons */
+.clear-button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
     border-radius: 8px;
-    background: white;
-    color: var(--text);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.filter-select:hover {
-    border-color: var(--primary);
+.clear-button:hover {
+    background: var(--primary-light);
 }
 
-.filter-select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+/* Metrics */
+.metric-change {
+    font-size: 0.875rem;
+    margin-top: 4px;
 }
 
-/* Metrics styling */
 .metric-up {
     color: var(--success);
-    font-weight: 500;
 }
 
 .metric-down {
     color: var(--error);
-    font-weight: 500;
 }
 
-/* Enhanced scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-::-webkit-scrollbar-track {
-    background: var(--background);
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filters-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
-::-webkit-scrollbar-thumb {
-    background: var(--primary-light);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--primary);
+/* Error Message */
+.error-message {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    padding: 12px;
+    border-radius: 8px;
+    margin: 12px 0;
+    display: none;
 }
 </style>
 <body>
@@ -337,59 +451,58 @@
         // Chart initialization
         function initializeCharts() {
             // Event Distribution Chart
-           // Event Distribution Chart
-state.charts.distribution = new Chart(
-    document.getElementById('eventDistributionChart'),
-    {
-        type: 'doughnut',
-        data: {
-            labels: ['Location', 'Tracking', 'System'],
-            datasets: [{
-                data: [0, 0, 0],
-                backgroundColor: [
-                    'rgba(255, 107, 53, 0.8)',  // Primary orange
-                    'rgba(255, 146, 85, 0.8)',  // Secondary orange
-                    'rgba(255, 179, 71, 0.8)'   // Tertiary orange
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    }
-);
+            state.charts.distribution = new Chart(
+                document.getElementById('eventDistributionChart'),
+                {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Location', 'Tracking', 'System'],
+                        datasets: [{
+                            data: [0, 0, 0],
+                            backgroundColor: [
+                                'rgba(79, 70, 229, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                }
+            );
 
-// Event Rate Chart
-state.charts.rate = new Chart(
-    document.getElementById('eventRateChart'),
-    {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Events/Minute',
-                data: [],
-                borderColor: 'rgba(255, 107, 53, 1)',
-                backgroundColor: 'rgba(255, 107, 53, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true },
-                x: { grid: { display: false } }
-            }
-        }
-    }
-);
+            // Event Rate Trend Chart
+            state.charts.rate = new Chart(
+                document.getElementById('eventRateChart'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Events/Minute',
+                            data: [],
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                }
+            );
 
             // Event Types Over Time
             state.charts.types = new Chart(
