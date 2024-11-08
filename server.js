@@ -6,15 +6,13 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-
-
-
 const io = socketIo(server, {
     cors: {
         origin: "*",  // In production, specify your actual domains
         methods: ["GET", "POST"]
     }
 });
+
 // Redis setup with async connection
 const redisClient = redis.createClient({
     url: 'redis://localhost:6379'
@@ -30,6 +28,7 @@ const redisClient = redis.createClient({
 app.get('/health', (req, res) => {
     res.send({ status: 'ok' });
 });
+
 // Serve static files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -37,7 +36,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
-
 
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
@@ -132,7 +130,6 @@ io.on('connection', (socket) => {
         console.log('Client disconnected:', socket.id);
     });
 });
-
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
