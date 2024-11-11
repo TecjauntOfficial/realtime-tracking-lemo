@@ -22,7 +22,7 @@ socket.on('connect', () => {
     
     // Start periodic updates
     sendLocationUpdate(); // Send first update immediately
-    setInterval(sendLocationUpdate, 3000); // Then every 3 seconds
+    setInterval(sendLocationUpdate, 1000); // Then every 3 seconds
 });
 
 function sendLocationUpdate() {
