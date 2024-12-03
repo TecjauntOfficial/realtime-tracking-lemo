@@ -580,6 +580,20 @@ body {
             updateDashboard();
         });
 
+        // Handle location updates
+        socket.on('locationUpdate', (data) => {
+            console.log(`[${data.timestamp}] Location update for driver ${data.driverId}:`, data.location);
+            // Update the dashboard with the new location data
+            // You can add code here to update a map or other UI elements
+        });
+
+        // Handle chat messages
+        socket.on('messageReceived', (data) => {
+            console.log(`[${data.timestamp}] Message from ${data.sender}:`, data.message);
+            // Update the dashboard with the new chat message
+            // You can add code here to update a chat UI element
+        });
+
         // Event processing
         function processEvent(message) {
             // Update event counts
