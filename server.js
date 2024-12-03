@@ -28,6 +28,20 @@ app.use(express.json());
 app.get('/', (req, res) => res.send('Server is running'));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Dashboard route
+app.get('/dashboard', (req, res) => {
+    console.log('Dashboard requested');
+    console.log('Current directory:', __dirname);
+    console.log('Attempting to serve:', path.join(__dirname, 'dashboard.html'));
+    
+    res.sendFile(path.join(__dirname, 'dashboard.html'), (err) => {
+        if (err) {
+            console.error('Error sending file:', err);
+            res.status(500).send('Error loading dashboard');
+        }
+    });
+});
+
 // Import and use modules
 require('./liveLocation')(io, redisClient);
 require('./chat')(io, redisClient);
