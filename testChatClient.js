@@ -1,5 +1,5 @@
 const io = require('socket.io-client');
-const socket = io('http://3.27.222.220:3000'); // Adjust the URL if needed
+const socket = io('http://localhost:3000'); // Adjust the URL if needed
 
 const roomId = 'room123';
 const sender = 'user456';
@@ -21,8 +21,8 @@ socket.on('connect', () => {
     sendMessage('Hello, this is a test message!');
 
     // Send additional messages after a delay
-    setTimeout(() => sendMessage('This is another test message!'), 2000);
-    setTimeout(() => sendMessage('Yet another test message!'), 4000);
+    setTimeout(() => sendMessage('This is another test message!'), 800);
+    setTimeout(() => sendMessage('Yet another test message!'), 900);
 });
 
 // Function to send a message

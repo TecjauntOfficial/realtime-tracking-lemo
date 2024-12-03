@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: '*', methods: ['GET', 'POST'] } });
 
 // Redis client setup
-const redisClient = redis.createClient({ url: 'redis://localhost:6379' });
+const redisClient = redis.createClient({ url: 'redis://localhost:6381' });
 (async () => {
     try {
         await redisClient.connect();
