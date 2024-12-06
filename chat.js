@@ -20,10 +20,32 @@ module.exports = function(io, redisClient) {
             io.to(`chat:${roomId}`).emit('messageReceived', messageData);
         });
 
+        // Handle chat messages
+        socket.on('messageReceived', (data) => {
+            console.log(`[${data.timestamp}] Message from ${data.sender}:`, data.message);
+            io.emit('messageReceived', data);
+        });
+
         // Fetch chat history
         socket.on('getChatHistory', async (roomId, callback) => {
             const messages = await redisClient.lRange(`messages:${roomId}`, 0, -1);
             callback(messages.map(JSON.parse));
+        });
+
+        // Delete chat history
+        socket.on('deleteChat', async (roomId, callback) => {
+            await redisClient.del(`messages:${roomId}`);
+            callback({ success: true });
+        });
+
+        // Typing indicator
+        socket.on('startTyping', (data) => {
+            socket.to(data.roomId).emit('userTyping', { user: data.user });
+        });
+        
+        // Stop typing indicator
+        socket.on('stopTyping', (data) => {
+            socket.to(data.roomId).emit('userStopTyping', { user: data.user });
         });
 
         socket.on('disconnect', () => {
