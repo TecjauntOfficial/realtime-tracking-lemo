@@ -15,7 +15,7 @@ const io = socketIo(server, {
 
 // Redis setup with async connection
 const redisClient = redis.createClient({
-    url: 'redis://localhost:6379'
+    url: 'redis://localhost:6381'
 });
 
 // Connect to Redis
