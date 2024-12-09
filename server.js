@@ -112,6 +112,33 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Handle user joining the chat
+    socket.on('userJoined', (data) => {
+        const { name } = data;
+        socket.username = name;
+        socket.emit('userList', Array.from(io.sockets.sockets.values()).map(s => s.username));
+        io.emit('userList', Array.from(io.sockets.sockets.values()).map(s => s.username));
+        console.log(`${name} has joined the chat.`);
+    });
+
+    // Handle joining a chat room
+    socket.on('joinRoom', (roomId) => {
+        socket.join(roomId);
+        console.log(`${socket.username} joined room: ${roomId}`);
+    });
+
+    // Handle sending a message
+    socket.on('sendMessage', (messageData) => {
+        const { roomId, message } = messageData;
+        const msg = {
+            user: socket.username,
+            message,
+            timestamp: new Date().toISOString()
+        };
+        io.to(roomId).emit('newMessage', msg);
+        console.log(`Message from ${socket.username} in ${roomId}: ${message}`);
+    });
+
     // Join specific driver's tracking room
     socket.on('trackDriver', (driverId) => {
         const roomName = `ride:${driverId}`;

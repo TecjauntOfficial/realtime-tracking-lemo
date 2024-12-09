@@ -1,6 +1,6 @@
 // testClient.js
 const io = require('socket.io-client');
-const socket = io('http://3.27.222.220:3000');
+const socket = io('http://13.236.156.205:3000');
 
 function generateLocation(baseLocation) {
     return {
@@ -22,7 +22,7 @@ socket.on('connect', () => {
     
     // Start periodic updates
     sendLocationUpdate(); // Send first update immediately
-    setInterval(sendLocationUpdate, 10); // Then every 3 seconds
+    setInterval(sendLocationUpdate, 200); // Then every 3 seconds
 });
 
 function sendLocationUpdate() {
