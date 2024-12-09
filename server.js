@@ -3,7 +3,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const redis = require('redis');
 const path = require('path');
-
+const handleChat = require('./chat');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -23,6 +23,9 @@ const redisClient = redis.createClient({
     try {
         await redisClient.connect();
         console.log('Redis connected successfully');
+
+        // Initialize chat handling after Redis is connected
+        handleChat(io, redisClient);
     } catch (err) {
         console.error('Redis connection error:', err);
     }
