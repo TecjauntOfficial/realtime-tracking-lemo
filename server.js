@@ -212,6 +212,48 @@ io.on('connection', (socket) => {
     });
 });
 
+// Create a separate namespace for chat
+const chatNamespace = io.of('/chat');
+
+chatNamespace.on('connection', (socket) => {
+    console.log('\n=== New Chat Client Connected ===');
+    console.log('Chat Socket ID:', socket.id);
+    console.log('===============================\n');
+
+    // Handle user joining the chat
+    socket.on('userJoined', (data) => {
+        const { name } = data;
+        socket.username = name;
+        chatNamespace.emit('userList', Array.from(chatNamespace.sockets.values()).map(s => s.username));
+        console.log(`${name} has joined the chat.`);
+    });
+
+    // Handle joining a chat room
+    socket.on('joinRoom', (roomId) => {
+        socket.join(roomId);
+        console.log(`${socket.username} joined room: ${roomId}`);
+    });
+
+    // Handle sending a message
+    socket.on('sendMessage', (messageData) => {
+        const { roomId, message } = messageData;
+        const msg = {
+            user: socket.username,
+            message,
+            timestamp: new Date().toISOString()
+        };
+        chatNamespace.to(roomId).emit('newMessage', msg);
+        console.log(`Message from ${socket.username} in ${roomId}: ${message}`);
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        console.log('\n=== Chat Client Disconnected ===');
+        console.log('Chat Socket ID:', socket.id);
+        console.log('===============================\n');
+    });
+});
+
 // Error handling for the server
 server.on('error', (error) => {
     console.error('Server error:', error);
