@@ -4,48 +4,56 @@ module.exports = function(io, redisClient) {
 
         // Join chat room
         socket.on('joinChat', (roomId) => {
-            socket.join(`chat:${roomId}`);
-            console.log(`Socket ${socket.id} joined room chat:${roomId}`);
+            // Remove the chat: prefix to keep it simple
+            socket.join(roomId);
+            console.log(`Socket ${socket.id} joined room ${roomId}`);
         });
 
         // Handle sending messages
         socket.on('sendMessage', async (data) => {
-            const { roomId, sender, message } = data;
-            const messageData = { sender, message, timestamp: new Date().toISOString() };
+            const { roomId, sender, message, profilePicture } = data;
+            const messageData = { 
+                sender, 
+                message, 
+                profilePicture,
+                timestamp: new Date().toISOString() 
+            };
 
-            // Save message to Redis
-            await redisClient.lPush(`messages:${roomId}`, JSON.stringify(messageData));
-
-            // Broadcast to chat room
-            io.to(`chat:${roomId}`).emit('messageReceived', messageData);
-        });
-
-        // Handle chat messages
-        socket.on('messageReceived', (data) => {
-            console.log(`[${data.timestamp}] Message from ${data.sender}:`, data.message);
-            io.emit('messageReceived', data);
+            try {
+                // Save message to Redis
+                await redisClient.lPush(`messages:${roomId}`, JSON.stringify(messageData));
+                
+                // Broadcast to everyone in the room including sender
+                io.in(roomId).emit('messageReceived', messageData);
+                
+                console.log(`Message sent to room ${roomId}:`, messageData);
+            } catch (error) {
+                console.error('Error handling message:', error);
+            }
         });
 
         // Fetch chat history
         socket.on('getChatHistory', async (roomId, callback) => {
-            const messages = await redisClient.lRange(`messages:${roomId}`, 0, -1);
-            callback(messages.map(JSON.parse));
+            try {
+                const messages = await redisClient.lRange(`messages:${roomId}`, 0, -1);
+                const parsedMessages = messages.map(msg => JSON.parse(msg));
+                callback(parsedMessages);
+            } catch (error) {
+                console.error('Error fetching chat history:', error);
+                callback([]);
+            }
         });
 
         // Delete chat history
         socket.on('deleteChat', async (roomId, callback) => {
-            await redisClient.del(`messages:${roomId}`);
-            callback({ success: true });
-        });
-
-        // Typing indicator
-        socket.on('startTyping', (data) => {
-            socket.to(data.roomId).emit('userTyping', { user: data.user });
-        });
-        
-        // Stop typing indicator
-        socket.on('stopTyping', (data) => {
-            socket.to(data.roomId).emit('userStopTyping', { user: data.user });
+            try {
+                await redisClient.del(`messages:${roomId}`);
+                io.in(roomId).emit('chatCleared');
+                callback({ success: true });
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+                callback({ success: false, message: 'Failed to delete chat history' });
+            }
         });
 
         socket.on('disconnect', () => {
