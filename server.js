@@ -15,7 +15,7 @@ const io = socketIo(server, {
 
 // Redis setup with async connection
 const redisClient = redis.createClient({
-    url: 'redis://localhost:6379'
+    url: 'redis://localhost:6381'
 });
 
 // Connect to Redis
@@ -195,6 +195,8 @@ server.listen(PORT, () => {
     console.log(`Dashboard available at http://localhost:${PORT}/dashboard`);
     console.log('====================\n');
 });
+
+require('./chat')(io, redisClient);
 
 // Handle process termination
 process.on('SIGTERM', () => {
