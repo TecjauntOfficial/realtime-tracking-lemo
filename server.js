@@ -245,6 +245,24 @@ io.on("connection", (socket) => {
     next();
   });
 
+    // Middleware for logging all events
+    socket.use((packet, next) => {
+      const [eventName, eventData] = packet;
+  
+      console.log(`\nEvent received: ${eventName}`, eventData);
+  
+      io.to("test-chat").emit("event", {
+        direction: "received",
+        event: eventName,
+        data: eventData,
+        socketId: socket.id,
+        timestamp: new Date().toISOString(),
+      });
+  
+      next();
+    });
+  
+
   // Handle disconnection
   socket.on("disconnect", () => {
     console.log("\n=== Client Disconnected ===");
