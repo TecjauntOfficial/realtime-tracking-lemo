@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Chat Dashboard</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+            --bg: #f3f4f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .online {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .room-list {
+            list-style: none;
+        }
+
+        .room-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .room-item:hover {
+            background: var(--bg);
+        }
+
+        .room-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .chat-log {
+            height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-event {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            background: var(--bg);
+            border-left: 3px solid var(--primary);
+        }
+
+        .chat-event .time {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .clear-btn {
+            background: var(--error);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>Test Chat Dashboard</h1>
+            <div id="connectionStatus" class="status offline">Offline</div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>Active Rooms</h2>
+                <ul id="roomList" class="room-list"></ul>
+                <div class="controls">
+                    <button id="refreshRooms">Refresh Rooms</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Chat Events</h2>
+                <div id="chatLog" class="chat-log"></div>
+                <div class="controls">
+                    <button id="clearLog" class="clear-btn">Clear Log</button>
+                    <button id="exportLog">Export Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+        let activeRooms = new Set();
+
+        // DOM Elements
+        const connectionStatus = document.getElementById('connectionStatus');
+        const roomList = document.getElementById('roomList');
+        const chatLog = document.getElementById('chatLog');
+        const clearLogBtn = document.getElementById('clearLog');
+        const exportLogBtn = document.getElementById('exportLog');
+        const refreshRoomsBtn = document.getElementById('refreshRooms');
+
+        // Join dashboard monitoring
+        socket.on('connect', () => {
+            updateStatus(true);
+            socket.emit('joinDashboard');
+            socket.emit('join', 'test-chat');
+        });
+
+        socket.on('disconnect', () => {
+            updateStatus(false);
+        });
+
+        // Listen for all events
+        socket.on('event', (data) => {
+            logEvent(data);
+            updateRoomList(data);
+        });
+
+        function updateStatus(connected) {
+            connectionStatus.textContent = connected ? 'Online' : 'Offline';
+            connectionStatus.className = `status ${connected ? 'online' : 'offline'}`;
+        }
+
+        function logEvent(data) {
+            const event = document.createElement('div');
+            event.className = 'chat-event';
+            event.innerHTML = `
+                <div class="time">${new Date(data.timestamp).toLocaleTimeString()}</div>
+                <div><strong>${data.event}</strong> from ${data.socketId}</div>
+                <pre>${JSON.stringify(data.data, null, 2)}</pre>
+            `;
+            chatLog.appendChild(event);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function updateRoomList(data) {
+            if (data.data && data.data.roomId) {
+                activeRooms.add(data.data.roomId);
+                renderRoomList();
+            }
+        }
+
+        function renderRoomList() {
+            roomList.innerHTML = Array.from(activeRooms)
+                .map(room => `<li class="room-item">${room}</li>`)
+                .join('');
+        }
+
+        // Button handlers
+        clearLogBtn.addEventListener('click', () => {
+            chatLog.innerHTML = '';
+        });
+
+        exportLogBtn.addEventListener('click', () => {
+            const events = Array.from(chatLog.children).map(el => ({
+                time: el.querySelector('.time').textContent,
+                content: el.textContent
+            }));
+            
+            const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chat-log-${new Date().toISOString()}.json`;
+            a.click();
+        });
+
+        refreshRoomsBtn.addEventListener('click', () => {
+            socket.emit('getRooms');
+        });
+    </script>
+</body>
+</html>
