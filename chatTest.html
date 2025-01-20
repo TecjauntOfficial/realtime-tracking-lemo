@@ -169,12 +169,13 @@
 
         .chat-layout {
             display: grid;
-            grid-template-columns: 300px 1fr 300px;
+            grid-template-columns: 250px 1fr 250px;
             gap: 1rem;
-            height: calc(100vh - 200px);
+            height: calc(100vh - 120px);
+            margin-top: 20px;
         }
 
-        .user-panel {
+        .side-panel {
             background: var(--card);
             border-radius: 12px;
             padding: 1rem;
@@ -183,121 +184,7 @@
             gap: 1rem;
         }
 
-        .chat-window {
-            background: var(--card);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            padding: 1rem;
-            background: var(--primary);
-            color: white;
-        }
-
-        .chat-messages {
-            flex-grow: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 0.75rem;
-            border-radius: 12px;
-            margin: 0.25rem 0;
-        }
-
-        .message.sent {
-            background: var(--primary);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.received {
-            background: var(--secondary);
-            color: var(--text);
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-
-        .chat-input {
-            padding: 1rem;
-            display: flex;
-            gap: 0.5rem;
-            background: var(--background);
-        }
-
-        .chat-input input {
-            flex-grow: 1;
-        }
-
-        .user-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .user-item {
-            padding: 0.5rem;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            background: var(--background);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .user-status {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-        }
-
-        .analytics-panel {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-
-        .stat-box {
-            background: var(--background);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-        }
-
-        .typing-indicator {
-            padding: 0.5rem;
-            font-style: italic;
-            color: var(--text);
-            opacity: 0.7;
-        }
-
-        .emoji-picker {
-            position: absolute;
-            bottom: 100%;
-            right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: none;
-        }
-
-        .chat-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            height: calc(100vh - 150px);
-        }
-
-        .user-chat {
+        .main-chat {
             background: var(--card);
             border-radius: 12px;
             display: flex;
@@ -306,55 +193,71 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .chat-header {
-            background: var(--primary);
-            color: white;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-body {
+        .chat-messages {
             flex: 1;
-            display: flex;
-            flex-direction: column;
             padding: 1rem;
             overflow-y: auto;
             background: var(--background);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
         .message {
-            max-width: 80%;
+            max-width: 70%;
             padding: 0.75rem;
-            margin: 0.5rem 0;
+            margin: 0.25rem 0;
             border-radius: 12px;
+            position: relative;
         }
 
-        .message.sent {
-            align-self: flex-end;
+        .message.user1 {
+            align-self: flex-start;
             background: var(--primary);
             color: white;
+            border-bottom-left-radius: 4px;
         }
 
-        .message.received {
-            align-self: flex-start;
-            background: white;
+        .message.user2 {
+            align-self: flex-end;
+            background: var(--secondary);
+            color: var(--text);
+            border-bottom-right-radius: 4px;
         }
 
-        .chat-input {
+        .user-controls {
             padding: 1rem;
-            display: flex;
+            background: var(--background);
+            border-radius: 8px;
+        }
+
+        .user-status {
+            display: inline-flex;
+            align-items: center;
             gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .user-status.connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .message-info {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-bottom: 0.25rem;
+        }
+
+        .chat-input-area {
+            padding: 1rem;
             background: white;
             border-top: 1px solid var(--secondary);
-        }
-
-        .chat-input input {
-            flex: 1;
-            padding: 0.5rem;
-            border: 1px solid var(--secondary);
-            border-radius: 6px;
+            display: flex;
+            gap: 0.5rem;
         }
 
         .info-panel {
@@ -394,38 +297,45 @@
             <p>Room ID: <span id="room-id">Connecting...</span></p>
         </div>
 
-        <div class="chat-container">
-            <!-- User 1 Chat -->
-            <div class="user-chat">
-                <div class="chat-header">
-                    <div>
-                        <h3>User 1</h3>
-                        <div class="connection-status" id="user1-status">Disconnected</div>
-                    </div>
+        <div class="chat-layout">
+            <!-- Left Panel (User 1) -->
+            <div class="side-panel">
+                <h3>User 1</h3>
+                <div class="user-controls">
                     <input type="text" id="username1" placeholder="Enter username">
                     <button id="join1">Join Chat</button>
+                    <div class="user-status" id="user1-status">Disconnected</div>
                 </div>
-                <div class="chat-body" id="chat1"></div>
-                <div class="chat-input">
-                    <input type="text" id="message1" placeholder="Type a message...">
-                    <button id="send1">Send</button>
+                <div class="chat-input-area">
+                    <input type="text" id="message1" placeholder="Type message...">
+                    <button id="send1">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- User 2 Chat -->
-            <div class="user-chat">
+            <!-- Main Chat Area -->
+            <div class="main-chat">
                 <div class="chat-header">
-                    <div>
-                        <h3>User 2</h3>
-                        <div class="connection-status" id="user2-status">Disconnected</div>
-                    </div>
+                    <h3>Chat Room</h3>
+                    <div id="active-users"></div>
+                </div>
+                <div class="chat-messages" id="chat-messages"></div>
+            </div>
+
+            <!-- Right Panel (User 2) -->
+            <div class="side-panel">
+                <h3>User 2</h3>
+                <div class="user-controls">
                     <input type="text" id="username2" placeholder="Enter username">
                     <button id="join2">Join Chat</button>
+                    <div class="user-status" id="user2-status">Disconnected</div>
                 </div>
-                <div class="chat-body" id="chat2"></div>
-                <div class="chat-input">
-                    <input type="text" id="message2" placeholder="Type a message...">
-                    <button id="send2">Send</button>
+                <div class="chat-input-area">
+                    <input type="text" id="message2" placeholder="Type message...">
+                    <button id="send2">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -443,100 +353,92 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Generate random room ID
-        const roomId = Math.random().toString(36).substring(7);
-        document.getElementById('room-id').textContent = roomId;
+        // Initialize chat state
+        const chatState = {
+            roomId: Math.random().toString(36).substring(7),
+            socket1: io('/chat'),
+            socket2: io('/chat'),
+            users: { user1: null, user2: null },
+            messageCount: 0
+        };
 
-        // Create two socket connections
-        const socket1 = io('/chat');
-        const socket2 = io('/chat');
-        
-        let user1 = null;
-        let user2 = null;
+        // Update room ID display
+        document.getElementById('room-id').textContent = chatState.roomId;
 
-        // Setup User 1
-        document.getElementById('join1').addEventListener('click', () => {
-            const username = document.getElementById('username1').value;
-            if (username) {
-                user1 = username;
-                socket1.emit('userJoined', { name: username });
-                socket1.emit('joinRoom', roomId);
-                updateStatus('user1-status', 'Connected');
-            }
-        });
-
-        // Setup User 2
-        document.getElementById('join2').addEventListener('click', () => {
-            const username = document.getElementById('username2').value;
-            if (username) {
-                user2 = username;
-                socket2.emit('userJoined', { name: username });
-                socket2.emit('joinRoom', roomId);
-                updateStatus('user2-status', 'Connected');
-            }
-        });
-
-        // Send message handlers
-        document.getElementById('send1').addEventListener('click', () => {
-            sendMessage(socket1, 'message1', user1, 'chat1', 'sent');
-        });
-
-        document.getElementById('send2').addEventListener('click', () => {
-            sendMessage(socket2, 'message2', user2, 'chat2', 'sent');
-        });
-
-        function sendMessage(socket, inputId, username, chatId, messageClass) {
-            const input = document.getElementById(inputId);
-            const message = input.value.trim();
-            
-            if (message && username) {
-                socket.emit('sendMessage', {
-                    roomId,
-                    message,
-                    user: username
-                });
-                
-                addMessageToChat(chatId, {
-                    user: username,
-                    message,
-                    timestamp: new Date()
-                }, messageClass);
-                
-                input.value = '';
-            }
-        }
-
-        // Message handling
-        function addMessageToChat(chatId, message, messageClass) {
-            const chat = document.getElementById(chatId);
+        // Message handling function
+        function addMessage(message, userType) {
+            const chatMessages = document.getElementById('chat-messages');
             const messageEl = document.createElement('div');
-            messageEl.className = `message ${messageClass}`;
+            messageEl.className = `message ${userType}`;
             messageEl.innerHTML = `
-                <div class="message-header">
+                <div class="message-info">
                     <strong>${message.user}</strong>
-                    <small>${new Date(message.timestamp).toLocaleTimeString()}</small>
+                    <span>${new Date(message.timestamp).toLocaleTimeString()}</span>
                 </div>
-                <div>${message.message}</div>
+                <div class="message-content">${message.message}</div>
             `;
-            chat.appendChild(messageEl);
-            chat.scrollTop = chat.scrollHeight;
+            chatMessages.appendChild(messageEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatState.messageCount++;
         }
 
-        // Socket event listeners
-        [socket1, socket2].forEach((socket, index) => {
-            socket.on('newMessage', (message) => {
-                const isUser1 = index === 0;
-                const chatId = isUser1 ? 'chat1' : 'chat2';
-                const messageClass = message.user === (isUser1 ? user1 : user2) ? 'sent' : 'received';
-                addMessageToChat(chatId, message, messageClass);
+        // Setup user join handlers
+        ['1', '2'].forEach(userNum => {
+            document.getElementById(`join${userNum}`).addEventListener('click', () => {
+                const username = document.getElementById(`username${userNum}`).value;
+                if (username) {
+                    chatState[`user${userNum}`] = username;
+                    const socket = chatState[`socket${userNum}`];
+                    socket.emit('userJoined', { name: username });
+                    socket.emit('joinRoom', chatState.roomId);
+                    updateStatus(`user${userNum}-status`, 'Connected');
+                }
             });
         });
 
-        // Update status display
+        // Setup message sending
+        ['1', '2'].forEach(userNum => {
+            document.getElementById(`send${userNum}`).addEventListener('click', () => {
+                const input = document.getElementById(`message${userNum}`);
+                const message = input.value.trim();
+                if (message && chatState[`user${userNum}`]) {
+                    chatState[`socket${userNum}`].emit('sendMessage', {
+                        roomId: chatState.roomId,
+                        message,
+                        user: chatState[`user${userNum}`]
+                    });
+                    input.value = '';
+                }
+            });
+        });
+
+        // Socket event listeners
+        [chatState.socket1, chatState.socket2].forEach((socket, index) => {
+            const userNum = index + 1;
+            
+            socket.on('connect', () => {
+                console.log(`Socket ${userNum} connected`);
+            });
+
+            socket.on('newMessage', (message) => {
+                const userType = message.user === chatState[`user${userNum}`] ? 
+                    `user${userNum}` : 
+                    `user${userNum === 1 ? 2 : 1}`;
+                addMessage(message, userType);
+            });
+
+            // Enter key handler
+            document.getElementById(`message${userNum}`).addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById(`send${userNum}`).click();
+                }
+            });
+        });
+
         function updateStatus(elementId, status) {
             const element = document.getElementById(elementId);
             element.textContent = status;
-            element.className = `connection-status ${status.toLowerCase()}`;
+            element.className = `user-status ${status.toLowerCase()}`;
         }
 
         // Implementation details
@@ -574,15 +476,6 @@
             panel.classList.toggle('open');
             document.getElementById('implementation-details').innerHTML = implementationDetails;
         }
-
-        // Enter key handlers
-        document.getElementById('message1').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('send1').click();
-        });
-
-        document.getElementById('message2').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('send2').click();
-        });
     </script>
 </body>
 </html>
