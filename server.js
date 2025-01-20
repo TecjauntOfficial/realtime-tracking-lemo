@@ -18,6 +18,11 @@ const redisClient = redis.createClient({
   url: "redis://localhost:6379",
 });
 
+// Improve Redis error handling
+redisClient.on('error', (err) => {
+  console.error('Redis error:', err);
+});
+
 // Connect to Redis
 (async () => {
   try {
@@ -28,6 +33,7 @@ const redisClient = redis.createClient({
     handleChat(io, redisClient);
   } catch (err) {
     console.error("Redis connection error:", err);
+    process.exit(1); // Exit if Redis fails to connect
   }
 })();
 
@@ -228,13 +234,22 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Middleware for logging all events
+  // Single middleware for logging all events
   socket.use((packet, next) => {
     const [eventName, eventData] = packet;
 
     console.log(`\nEvent received: ${eventName}`, eventData);
 
+    // Emit to both dashboard and test-chat rooms
     io.to("dashboard").emit("event", {
+      direction: "received",
+      event: eventName,
+      data: eventData,
+      socketId: socket.id,
+      timestamp: new Date().toISOString(),
+    });
+
+    io.to("test-chat").emit("event", {
       direction: "received",
       event: eventName,
       data: eventData,
@@ -244,24 +259,6 @@ io.on("connection", (socket) => {
 
     next();
   });
-
-    // Middleware for logging all events
-    socket.use((packet, next) => {
-      const [eventName, eventData] = packet;
-  
-      console.log(`\nEvent received: ${eventName}`, eventData);
-  
-      io.to("test-chat").emit("event", {
-        direction: "received",
-        event: eventName,
-        data: eventData,
-        socketId: socket.id,
-        timestamp: new Date().toISOString(),
-      });
-  
-      next();
-    });
-  
 
   // Handle disconnection
   socket.on("disconnect", () => {
@@ -280,6 +277,9 @@ chatNamespace.on("connection", (socket) => {
   console.log("Chat Socket ID:", socket.id);
   console.log("===============================\n");
 
+  // Add room state tracking
+  const joinedRooms = new Set();
+
   // Handle user joining the chat
   socket.on("userJoined", (data) => {
     const { name } = data;
@@ -294,7 +294,38 @@ chatNamespace.on("connection", (socket) => {
   // Handle joining a chat room
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
+    joinedRooms.add(roomId);
     console.log(`${socket.username} joined room: ${roomId}`);
+    
+    // Notify room members
+    chatNamespace.to(roomId).emit("userJoinedRoom", {
+      user: socket.username,
+      room: roomId
+    });
+  });
+
+  socket.on("leaveRoom", (roomId) => {
+    if (joinedRooms.has(roomId)) {
+      socket.leave(roomId);
+      joinedRooms.delete(roomId);
+      console.log(`${socket.username} left room: ${roomId}`);
+      
+      // Notify room members
+      chatNamespace.to(roomId).emit("userLeftRoom", {
+        user: socket.username,
+        room: roomId
+      });
+    }
+  });
+
+  // Enhanced message handling with typing indicators
+  socket.on("typing", ({ roomId, isTyping }) => {
+    if (joinedRooms.has(roomId)) {
+      socket.to(roomId).emit("userTyping", {
+        user: socket.username,
+        isTyping
+      });
+    }
   });
 
   // Handle sending a message
@@ -311,6 +342,14 @@ chatNamespace.on("connection", (socket) => {
 
   // Handle disconnection
   socket.on("disconnect", () => {
+    // Notify all rooms this user was in
+    joinedRooms.forEach(roomId => {
+      chatNamespace.to(roomId).emit("userLeftRoom", {
+        user: socket.username,
+        room: roomId
+      });
+    });
+    
     console.log("\n=== Chat Client Disconnected ===");
     console.log("Chat Socket ID:", socket.id);
     console.log("===============================\n");
