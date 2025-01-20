@@ -1,7 +1,7 @@
 const io = require('socket.io-client');
 
 // Connect to the chat namespace
-const socket = io('http://13.236.156.205:3000/chat');
+const socket = io('http://localhost:3000/chat');
 
 // Handle connection
 socket.on('connect', () => {

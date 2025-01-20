@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Chat Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .chat-container {
+            flex: 1;
+            max-width: 500px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .chatBox {
+            height: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+        }
+        
+        .messageInput {
+            width: calc(80% - 16px);
+            padding: 8px;
+            margin-right: 2%;
+        }
+        
+        .sendButton {
+            width: 18%;
+            padding: 8px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .sendButton:hover {
+            background-color: #0056b3;
+        }
+        
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        
+        .received {
+            background-color: #e9ecef;
+            margin-right: 20%;
+        }
+        
+        .sent {
+            background-color: #d4edda;
+            margin-left: 20%;
+        }
+        
+        .userList {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff;
+        }
+        
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- User 1 Chat -->
+    <div class="chat-container" id="user1Container">
+        <h2>Chat Room - User 1</h2>
+        <div class="userList">
+            <h3>Active Users</h3>
+            <ul id="activeUsers1"></ul>
+        </div>
+        <div class="chatBox" id="chatBox1"></div>
+        <input type="text" class="messageInput" id="messageInput1" placeholder="Type your message...">
+        <button class="sendButton" id="sendButton1">Send</button>
+    </div>
+
+    <!-- User 2 Chat -->
+    <div class="chat-container" id="user2Container">
+        <h2>Chat Room - User 2</h2>
+        <div class="userList">
+            <h3>Active Users</h3>
+            <ul id="activeUsers2"></ul>
+        </div>
+        <div class="chatBox" id="chatBox2"></div>
+        <input type="text" class="messageInput" id="messageInput2" placeholder="Type your message...">
+        <button class="sendButton" id="sendButton2">Send</button>
+    </div>
+
+    <script>
+        function createChatInstance(userId) {
+            const socket = io('http://13.236.156.205:3000/chat');
+            const roomId = 'testRoom';
+            let userName = '';
+
+            function sendMessage() {
+                const input = document.getElementById(`messageInput${userId}`);
+                const message = input.value.trim();
+                if (message) {
+                    const messageData = {
+                        roomId,
+                        sender: userName,
+                        message: message
+                    };
+                    socket.emit('sendMessage', messageData);
+                    displayMessage({ ...messageData, sent: true }, userId);
+                    input.value = '';
+                }
+            }
+
+            function displayMessage(data, userId) {
+                const chatBox = document.getElementById(`chatBox${userId}`);
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${data.sent ? 'sent' : 'received'}`;
+                messageDiv.innerHTML = `<strong>${data.sender || 'Anonymous'}:</strong> ${data.message}`;
+                chatBox.appendChild(messageDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            function displayChatHistory(messages, userId) {
+                messages.forEach(msg => {
+                    if (typeof msg === 'string') {
+                        msg = JSON.parse(msg);
+                    }
+                    displayMessage({ ...msg, sent: msg.sender === userName }, userId);
+                });
+            }
+
+            // Initialize chat
+            userName = `User${userId}`;
+            socket.emit('userJoined', { name: userName });
+            socket.emit('joinRoom', roomId);
+            socket.emit('getChatHistory', roomId, (messages) => {
+                console.log(`Received chat history for User${userId}:`, messages);
+                displayChatHistory(messages, userId);
+            });
+
+            // Event listeners
+            document.getElementById(`sendButton${userId}`).onclick = sendMessage;
+            document.getElementById(`messageInput${userId}`).onkeypress = (e) => {
+                if (e.key === 'Enter') sendMessage();
+            };
+
+            socket.on('connect', () => {
+                console.log(`User${userId} connected to chat server:`, socket.id);
+            });
+
+            socket.on('messageReceived', (data) => {
+                displayMessage({ ...data, sent: false }, userId);
+            });
+
+            socket.on('userList', (users) => {
+                const userList = document.getElementById(`activeUsers${userId}`);
+                userList.innerHTML = users.map(user => `<li>${user}</li>`).join('');
+            });
+
+            socket.on('disconnect', () => {
+                console.log(`User${userId} disconnected from chat server`);
+            });
+
+            return socket;
+        }
+
+        // Create two chat instances
+        const socket1 = createChatInstance(1);
+        const socket2 = createChatInstance(2);
+    </script>
+</body>
+</html>

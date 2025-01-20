@@ -33,3 +33,5 @@ const handleChat = (io, redisClient) => {
         });
     });
 };
+
+module.exports = handleChat;
