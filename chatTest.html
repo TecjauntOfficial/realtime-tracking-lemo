@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Test Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #818cf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --background: #f3f4f6;
+            --card: #ffffff;
+            --text: #1f2937;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 1.5rem;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .control-group {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background: var(--secondary);
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .status.connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status.disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .log-container {
+            height: 600px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .log-entry {
+            padding: 0.75rem;
+            border-left: 4px solid var(--primary);
+            background: white;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .timestamp {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .event-type {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .clear-button {
+            background: var(--error);
+        }
+
+        .clear-button:hover {
+            background: #dc2626;
+        }
+
+        .response-data {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #f1f5f9;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Chat Test Dashboard</h1>
+            <p>Test and monitor chat events in real-time</p>
+        </div>
+
+        <div class="grid">
+            <div class="card control-panel">
+                <div id="connection-status" class="status disconnected">
+                    <i class="fas fa-plug"></i>
+                    <span>Disconnected</span>
+                </div>
+
+                <div class="control-group">
+                    <h3>User Setup</h3>
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="username" placeholder="Enter username">
+                        <button id="join-user">
+                            <i class="fas fa-user-plus"></i>
+                            Join as User
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Room Management</h3>
+                    <div class="input-group">
+                        <label>Room ID</label>
+                        <input type="text" id="room-id" placeholder="Enter room ID">
+                        <button id="join-room">
+                            <i class="fas fa-door-open"></i>
+                            Join Room
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Message Controls</h3>
+                    <div class="input-group">
+                        <label>Message</label>
+                        <input type="text" id="message" placeholder="Enter message">
+                        <button id="send-message">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Message
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Room Actions</h3>
+                    <button id="clear-chat" class="clear-button">
+                        <i class="fas fa-trash"></i>
+                        Clear Chat History
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="log-header">
+                    <h2>Event Log</h2>
+                    <button id="clear-log" class="clear-button">
+                        <i class="fas fa-trash"></i>
+                        Clear Log
+                    </button>
+                </div>
+                <div id="log-container" class="log-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Connect to chat namespace
+        const socket = io('http://13.236.156.205:3000/chat');
+        let currentRoom = null;
+
+        // DOM Elements
+        const connectionStatus = document.getElementById('connection-status');
+        const logContainer = document.getElementById('log-container');
+
+        // Helper function to add log entry
+        function addLogEntry(type, data) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <div class="timestamp">${new Date().toISOString()}</div>
+                <div class="event-type">${type}</div>
+                ${data ? `<div class="response-data">${JSON.stringify(data, null, 2)}</div>` : ''}
+            `;
+            logContainer.insertBefore(entry, logContainer.firstChild);
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            connectionStatus.className = `status ${connected ? 'connected' : 'disconnected'}`;
+            connectionStatus.innerHTML = `
+                <i class="fas fa-plug"></i>
+                <span>${connected ? 'Connected' : 'Disconnected'}</span>
+            `;
+        }
+
+        // Socket event handlers
+        socket.on('connect', () => {
+            updateConnectionStatus(true);
+            addLogEntry('Connected', { socketId: socket.id });
+        });
+
+        socket.on('disconnect', () => {
+            updateConnectionStatus(false);
+            addLogEntry('Disconnected');
+        });
+
+        socket.on('userList', (users) => {
+            addLogEntry('User List Updated', users);
+        });
+
+        socket.on('chatHistory', (messages) => {
+            addLogEntry('Chat History Received', messages);
+        });
+
+        socket.on('newMessage', (message) => {
+            addLogEntry('New Message Received', message);
+        });
+
+        socket.on('chatCleared', () => {
+            addLogEntry('Chat Cleared');
+        });
+
+        // Button event handlers
+        document.getElementById('join-user').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            if (username) {
+                socket.emit('userJoined', { name: username });
+                addLogEntry('Join User Request', { username });
+            }
+        });
+
+        document.getElementById('join-room').addEventListener('click', () => {
+            const roomId = document.getElementById('room-id').value;
+            if (roomId) {
+                currentRoom = roomId;
+                socket.emit('joinRoom', roomId);
+                addLogEntry('Join Room Request', { roomId });
+            }
+        });
+
+        document.getElementById('send-message').addEventListener('click', () => {
+            const message = document.getElementById('message').value;
+            if (message && currentRoom) {
+                socket.emit('sendMessage', {
+                    roomId: currentRoom,
+                    message
+                });
+                addLogEntry('Message Sent', { roomId: currentRoom, message });
+                document.getElementById('message').value = '';
+            }
+        });
+
+        document.getElementById('clear-chat').addEventListener('click', () => {
+            if (currentRoom) {
+                socket.emit('clearChat', currentRoom);
+                addLogEntry('Clear Chat Request', { roomId: currentRoom });
+            }
+        });
+
+        document.getElementById('clear-log').addEventListener('click', () => {
+            logContainer.innerHTML = '';
+        });
+
+        // Handle enter key for message input
+        document.getElementById('message').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('send-message').click();
+            }
+        });
+    </script>
+</body>
+</html>
