@@ -32,8 +32,17 @@ const redisClient = redis.createClient({
 })();
 
 // Middleware to serve static files
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
+// Enable CORS
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+});
 
 // Basic routes
 app.get("/", (req, res) => {
@@ -56,6 +65,11 @@ app.get("/dashboard", (req, res) => {
       res.status(500).send("Error loading dashboard");
     }
   });
+});
+
+// Add a specific route for chatTest.html
+app.get('/chatTest', (req, res) => {
+    res.sendFile(path.join(__dirname, 'chatTest.html'));
 });
 
 // Socket.IO connection handling
