@@ -404,17 +404,17 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Initialize chat state
+        // Initialize chat state with single socket and room
         const chatState = {
             roomId: Math.random().toString(36).substring(7),
-            socket1: io('/chat'),
-            socket2: io('/chat'),
-            users: { user1: null, user2: null },
+            socket: io('/chat'),
+            users: {},
             messageCount: 0
         };
 
-        // Update room ID display
+        // Display room ID
         document.getElementById('room-id').textContent = chatState.roomId;
+        document.getElementById('room-display').textContent = chatState.roomId;
 
         // Message handling function
         function addMessage(message, userType) {
@@ -428,7 +428,6 @@
             `;
             chatMessages.appendChild(messageEl);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            chatState.messageCount++;
         }
 
         // Setup user join handlers
@@ -436,50 +435,27 @@
             document.getElementById(`join${userNum}`).addEventListener('click', () => {
                 const username = document.getElementById(`username${userNum}`).value;
                 if (username) {
-                    chatState[`user${userNum}`] = username;
-                    const socket = chatState[`socket${userNum}`];
-                    socket.emit('userJoined', { name: username });
-                    socket.emit('joinRoom', chatState.roomId);
+                    chatState.users[`user${userNum}`] = username;
+                    chatState.socket.emit('userJoined', { name: username });
+                    chatState.socket.emit('joinRoom', chatState.roomId);
                     updateStatus(`user${userNum}-status`, 'Connected');
                 }
             });
-        });
 
-        // Setup message sending
-        ['1', '2'].forEach(userNum => {
+            // Setup message sending
             document.getElementById(`send${userNum}`).addEventListener('click', () => {
                 const input = document.getElementById(`message${userNum}`);
                 const message = input.value.trim();
-                if (message && chatState[`user${userNum}`]) {
-                    chatState[`socket${userNum}`].emit('sendMessage', {
+                const username = chatState.users[`user${userNum}`];
+                
+                if (message && username) {
+                    chatState.socket.emit('sendMessage', {
                         roomId: chatState.roomId,
-                        message,
-                        user: chatState[`user${userNum}`]
+                        message: message,
+                        user: username
                     });
                     input.value = '';
                 }
-            });
-        });
-
-        // Socket event listeners
-        [chatState.socket1, chatState.socket2].forEach((socket, index) => {
-            const userNum = index + 1;
-            
-            socket.on('connect', () => {
-                console.log(`Socket ${userNum} connected`);
-                // Load chat history on connection
-                if (userNum === 1) loadChatHistory();
-            });
-
-            socket.on('newMessage', (message) => {
-                const userType = message.user === chatState[`user${userNum}`] ? 
-                    `user${userNum}` : 
-                    `user${userNum === 1 ? 2 : 1}`;
-                addMessage(message, userType);
-            });
-
-            socket.on('chatCleared', () => {
-                document.getElementById('chat-messages').innerHTML = '';
             });
 
             // Enter key handler
@@ -490,11 +466,46 @@
             });
         });
 
+        // Socket event listeners
+        chatState.socket.on('connect', () => {
+            console.log('Connected to chat server');
+        });
+
+        chatState.socket.on('newMessage', (message) => {
+            const userType = Object.entries(chatState.users).find(([_, name]) => name === message.user)?.[0] || 'user2';
+            addMessage(message, userType);
+        });
+
+        // Chat history handling
+        async function loadChatHistory() {
+            chatState.socket.emit('getChatHistory', chatState.roomId, (messages) => {
+                document.getElementById('chat-messages').innerHTML = '';
+                messages.forEach(msg => {
+                    const userType = Object.entries(chatState.users).find(([_, name]) => name === msg.user)?.[0] || 'user2';
+                    addMessage(msg, userType);
+                });
+            });
+        }
+
+        function clearChat() {
+            chatState.socket.emit('clearChat', chatState.roomId);
+            document.getElementById('chat-messages').innerHTML = '';
+        }
+
+        // Initialize buttons
+        document.getElementById('load-history').addEventListener('click', loadChatHistory);
+        document.getElementById('clear-chat').addEventListener('click', clearChat);
+
         function updateStatus(elementId, status) {
             const element = document.getElementById(elementId);
             element.textContent = status;
             element.className = `user-status ${status.toLowerCase()}`;
         }
+
+        // Auto-load history when chat loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadChatHistory, 1000); // Load history after a slight delay
+        });
 
         // Implementation details
         const implementationDetails = `
@@ -531,38 +542,6 @@
             panel.classList.toggle('open');
             document.getElementById('implementation-details').innerHTML = implementationDetails;
         }
-
-        // Add these new functions
-        async function loadChatHistory() {
-            try {
-                chatState.socket1.emit('getChatHistory', chatState.roomId, (messages) => {
-                    document.getElementById('chat-messages').innerHTML = '';
-                    messages.forEach(msg => {
-                        const userType = msg.user === chatState.user1 ? 'user1' : 'user2';
-                        addMessage(msg, userType);
-                    });
-                });
-            } catch (error) {
-                console.error('Error loading chat history:', error);
-            }
-        }
-
-        function clearChat() {
-            chatState.socket1.emit('clearChat', chatState.roomId);
-            document.getElementById('chat-messages').innerHTML = '';
-        }
-
-        // Initialize event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Display room ID
-            document.getElementById('room-display').textContent = chatState.roomId;
-
-            // Load history button
-            document.getElementById('load-history').addEventListener('click', loadChatHistory);
-
-            // Clear chat button
-            document.getElementById('clear-chat').addEventListener('click', clearChat);
-        });
     </script>
 </body>
 </html>
