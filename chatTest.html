@@ -288,6 +288,50 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             cursor: pointer;
         }
+
+        /* Add these new styles */
+        .chat-controls {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            color: white;
+        }
+
+        .chat-messages {
+            padding: 1rem;
+            overflow-y: auto;
+            height: calc(100vh - 280px);
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .message-bubble.user1 {
+            align-self: flex-start;
+            background: var(--primary);
+            color: white;
+            margin-right: auto;
+        }
+
+        .message-bubble.user2 {
+            align-self: flex-end;
+            background: var(--secondary);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -316,9 +360,16 @@
 
             <!-- Main Chat Area -->
             <div class="main-chat">
-                <div class="chat-header">
-                    <h3>Chat Room</h3>
-                    <div id="active-users"></div>
+                <div class="chat-controls">
+                    <h3>Chat Room: <span id="room-display"></span></h3>
+                    <div>
+                        <button id="load-history" class="clear-button">
+                            <i class="fas fa-history"></i> Load History
+                        </button>
+                        <button id="clear-chat" class="clear-button">
+                            <i class="fas fa-trash"></i> Clear Chat
+                        </button>
+                    </div>
                 </div>
                 <div class="chat-messages" id="chat-messages"></div>
             </div>
@@ -369,13 +420,11 @@
         function addMessage(message, userType) {
             const chatMessages = document.getElementById('chat-messages');
             const messageEl = document.createElement('div');
-            messageEl.className = `message ${userType}`;
+            messageEl.className = `message-bubble ${userType}`;
             messageEl.innerHTML = `
-                <div class="message-info">
-                    <strong>${message.user}</strong>
-                    <span>${new Date(message.timestamp).toLocaleTimeString()}</span>
-                </div>
-                <div class="message-content">${message.message}</div>
+                <strong>${message.user}</strong>
+                <div>${message.message}</div>
+                <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
             `;
             chatMessages.appendChild(messageEl);
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -418,6 +467,8 @@
             
             socket.on('connect', () => {
                 console.log(`Socket ${userNum} connected`);
+                // Load chat history on connection
+                if (userNum === 1) loadChatHistory();
             });
 
             socket.on('newMessage', (message) => {
@@ -425,6 +476,10 @@
                     `user${userNum}` : 
                     `user${userNum === 1 ? 2 : 1}`;
                 addMessage(message, userType);
+            });
+
+            socket.on('chatCleared', () => {
+                document.getElementById('chat-messages').innerHTML = '';
             });
 
             // Enter key handler
@@ -476,6 +531,38 @@
             panel.classList.toggle('open');
             document.getElementById('implementation-details').innerHTML = implementationDetails;
         }
+
+        // Add these new functions
+        async function loadChatHistory() {
+            try {
+                chatState.socket1.emit('getChatHistory', chatState.roomId, (messages) => {
+                    document.getElementById('chat-messages').innerHTML = '';
+                    messages.forEach(msg => {
+                        const userType = msg.user === chatState.user1 ? 'user1' : 'user2';
+                        addMessage(msg, userType);
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function clearChat() {
+            chatState.socket1.emit('clearChat', chatState.roomId);
+            document.getElementById('chat-messages').innerHTML = '';
+        }
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Display room ID
+            document.getElementById('room-display').textContent = chatState.roomId;
+
+            // Load history button
+            document.getElementById('load-history').addEventListener('click', loadChatHistory);
+
+            // Clear chat button
+            document.getElementById('clear-chat').addEventListener('click', clearChat);
+        });
     </script>
 </body>
 </html>
