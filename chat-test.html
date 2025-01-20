@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat System Test Panel</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            padding: 20px;
+            background: #f3f4f6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+
+        .test-section h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .input-group {
+            margin-bottom: 10px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .log-panel {
+            height: 500px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 10px;
+            border-left: 3px solid var(--primary);
+            margin-bottom: 10px;
+            background: #f8fafc;
+        }
+
+        .log-entry.success {
+            border-left-color: var(--success);
+        }
+
+        .log-entry.error {
+            border-left-color: var(--error);
+        }
+
+        .log-entry .timestamp {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .instruction-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .instruction-panel h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .instruction-list {
+            list-style-position: inside;
+            margin-bottom: 15px;
+        }
+
+        .instruction-list li {
+            margin-bottom: 8px;
+        }
+
+        .code-block {
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+
+        .clear-button {
+            background: var(--warning);
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Chat System Test Panel</h1>
+            <div id="connectionStatus" class="connection-status disconnected">Disconnected</div>
+        </div>
+
+        <div class="instruction-panel">
+            <h2>Test Instructions</h2>
+            <ol class="instruction-list">
+                <li>First, connect to the chat server using the "Connect" button</li>
+                <li>Join as a user with a unique name</li>
+                <li>Create or join an existing chat room</li>
+                <li>Send test messages to verify functionality</li>
+                <li>Monitor events and responses in the log panel</li>
+            </ol>
+            <div class="code-block">
+                Server URL: http://13.236.156.205:3000/chat
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <div class="test-section">
+                    <h3>1. Connection</h3>
+                    <button id="connectBtn">Connect</button>
+                    <button id="disconnectBtn">Disconnect</button>
+                </div>
+
+                <div class="test-section">
+                    <h3>2. User Management</h3>
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="username" placeholder="Enter username">
+                    </div>
+                    <button id="joinAsUser">Join as User</button>
+                </div>
+
+                <div class="test-section">
+                    <h3>3. Room Management</h3>
+                    <div class="input-group">
+                        <label>Room ID</label>
+                        <input type="text" id="roomId" placeholder="Enter room ID">
+                    </div>
+                    <button id="joinRoom">Join Room</button>
+                    <button id="leaveRoom">Leave Room</button>
+                </div>
+
+                <div class="test-section">
+                    <h3>4. Messaging</h3>
+                    <div class="input-group">
+                        <label>Message</label>
+                        <input type="text" id="message" placeholder="Enter message">
+                    </div>
+                    <button id="sendMessage">Send Message</button>
+                </div>
+
+                <div class="test-section">
+                    <h3>5. Admin Actions</h3>
+                    <button id="getUserList">Get User List</button>
+                    <button id="getChatHistory">Get Chat History</button>
+                    <button id="clearChat">Clear Chat</button>
+                </div>
+            </div>
+
+            <div class="panel log-panel">
+                <h3>Event Log</h3>
+                <div id="eventLog"></div>
+                <button id="clearLog" class="clear-button">Clear Log</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket = null;
+        let currentRoom = null;
+        let isConnected = false;
+
+        // DOM Elements
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const joinAsUserBtn = document.getElementById('joinAsUser');
+        const joinRoomBtn = document.getElementById('joinRoom');
+        const leaveRoomBtn = document.getElementById('leaveRoom');
+        const sendMessageBtn = document.getElementById('sendMessage');
+        const getUserListBtn = document.getElementById('getUserList');
+        const getChatHistoryBtn = document.getElementById('getChatHistory');
+        const clearChatBtn = document.getElementById('clearChat');
+        const clearLogBtn = document.getElementById('clearLog');
+        const eventLog = document.getElementById('eventLog');
+        const connectionStatus = document.getElementById('connectionStatus');
+
+        // Logging function
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `
+                <div class="timestamp">${new Date().toISOString()}</div>
+                <div class="content">${message}</div>
+            `;
+            eventLog.appendChild(entry);
+            eventLog.scrollTop = eventLog.scrollHeight;
+        }
+
+        // Connection management
+        connectBtn.addEventListener('click', () => {
+            if (!socket) {
+                socket = io('http://13.236.156.205:3000/chat');
+                setupSocketListeners();
+                log('Connecting to chat server...', 'info');
+            }
+        });
+
+        disconnectBtn.addEventListener('click', () => {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                isConnected = false;
+                updateConnectionStatus();
+                log('Disconnected from server', 'info');
+            }
+        });
+
+        // User management
+        joinAsUserBtn.addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            if (!username) {
+                log('Please enter a username', 'error');
+                return;
+            }
+            if (socket && isConnected) {
+                socket.emit('userJoined', { name: username });
+                log(`Joining as user: ${username}`, 'info');
+            } else {
+                log('Please connect to server first', 'error');
+            }
+        });
+
+        // Room management
+        joinRoomBtn.addEventListener('click', () => {
+            const roomId = document.getElementById('roomId').value;
+            if (!roomId) {
+                log('Please enter a room ID', 'error');
+                return;
+            }
+            if (socket && isConnected) {
+                socket.emit('joinRoom', roomId);
+                currentRoom = roomId;
+                log(`Joining room: ${roomId}`, 'info');
+            } else {
+                log('Please connect to server first', 'error');
+            }
+        });
+
+        leaveRoomBtn.addEventListener('click', () => {
+            if (currentRoom && socket && isConnected) {
+                socket.emit('leaveRoom', currentRoom);
+                log(`Leaving room: ${currentRoom}`, 'info');
+                currentRoom = null;
+            } else {
+                log('Not in any room', 'error');
+            }
+        });
+
+        // Messaging
+        sendMessageBtn.addEventListener('click', () => {
+            const message = document.getElementById('message').value;
+            if (!message) {
+                log('Please enter a message', 'error');
+                return;
+            }
+            if (!currentRoom) {
+                log('Please join a room first', 'error');
+                return;
+            }
+            if (socket && isConnected) {
+                socket.emit('sendMessage', {
+                    roomId: currentRoom,
+                    message: message
+                });
+                log(`Sending message: ${message}`, 'info');
+                document.getElementById('message').value = '';
+            } else {
+                log('Please connect to server first', 'error');
+            }
+        });
+
+        // Admin actions
+        getUserListBtn.addEventListener('click', () => {
+            if (socket && isConnected) {
+                socket.emit('getUserList');
+                log('Requesting user list', 'info');
+            }
+        });
+
+        getChatHistoryBtn.addEventListener('click', () => {
+            if (!currentRoom) {
+                log('Please join a room first', 'error');
+                return;
+            }
+            if (socket && isConnected) {
+                socket.emit('getChatHistory', currentRoom);
+                log('Requesting chat history', 'info');
+            }
+        });
+
+        clearChatBtn.addEventListener('click', () => {
+            if (!currentRoom) {
+                log('Please join a room first', 'error');
+                return;
+            }
+            if (socket && isConnected) {
+                socket.emit('clearChat', currentRoom);
+                log('Clearing chat history', 'info');
+            }
+        });
+
+        clearLogBtn.addEventListener('click', () => {
+            eventLog.innerHTML = '';
+            log('Log cleared', 'info');
+        });
+
+        function updateConnectionStatus() {
+            connectionStatus.textContent = isConnected ? 'Connected' : 'Disconnected';
+            connectionStatus.className = `connection-status ${isConnected ? 'connected' : 'disconnected'}`;
+        }
+
+        function setupSocketListeners() {
+            socket.on('connect', () => {
+                isConnected = true;
+                updateConnectionStatus();
+                log('Connected to server', 'success');
+            });
+
+            socket.on('disconnect', () => {
+                isConnected = false;
+                updateConnectionStatus();
+                log('Disconnected from server', 'error');
+            });
+
+            socket.on('userList', (users) => {
+                log(`Active users: ${JSON.stringify(users)}`, 'success');
+            });
+
+            socket.on('chatHistory', (messages) => {
+                log(`Chat history: ${JSON.stringify(messages)}`, 'success');
+            });
+
+            socket.on('newMessage', (message) => {
+                log(`New message received: ${JSON.stringify(message)}`, 'success');
+            });
+
+            socket.on('chatCleared', () => {
+                log('Chat has been cleared', 'success');
+            });
+
+            socket.on('error', (error) => {
+                log(`Error: ${error}`, 'error');
+            });
+        }
+    </script>
+</body>
+</html>
