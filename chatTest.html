@@ -289,216 +289,300 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             display: none;
         }
+
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            height: calc(100vh - 150px);
+        }
+
+        .user-chat {
+            background: var(--card);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .chat-header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            overflow-y: auto;
+            background: var(--background);
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 12px;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background: white;
+        }
+
+        .chat-input {
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            background: white;
+            border-top: 1px solid var(--secondary);
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+        }
+
+        .info-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            padding: 1rem;
+            box-shadow: -2px 0 4px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .info-panel.open {
+            right: 0;
+        }
+
+        .view-code-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Chat Test Dashboard</h1>
-            <p>Real-time chat testing environment</p>
-            <div id="connection-status" class="status disconnected">
-                <i class="fas fa-plug"></i>
-                <span>Disconnected</span>
-            </div>
+            <h1>Real-time Chat Test</h1>
+            <p>Room ID: <span id="room-id">Connecting...</span></p>
         </div>
 
-        <div class="chat-layout">
-            <!-- Left User Panel -->
-            <div class="user-panel">
-                <h3>User 1</h3>
-                <div class="input-group">
-                    <input type="text" id="username1" placeholder="Enter username">
-                    <button id="join-user1">Join as User 1</button>
-                </div>
-                <h4>Active Users</h4>
-                <div class="user-list" id="user-list1"></div>
-                <div class="room-controls">
-                    <input type="text" id="room-id1" placeholder="Enter room ID">
-                    <button id="join-room1">Join Room</button>
-                </div>
-            </div>
-
-            <!-- Main Chat Window -->
-            <div class="chat-window">
+        <div class="chat-container">
+            <!-- User 1 Chat -->
+            <div class="user-chat">
                 <div class="chat-header">
-                    <h3 id="room-title">Chat Room</h3>
-                    <span id="room-participants"></span>
+                    <div>
+                        <h3>User 1</h3>
+                        <div class="connection-status" id="user1-status">Disconnected</div>
+                    </div>
+                    <input type="text" id="username1" placeholder="Enter username">
+                    <button id="join1">Join Chat</button>
                 </div>
-                <div class="chat-messages" id="chat-messages"></div>
-                <div class="typing-indicator" id="typing-indicator"></div>
+                <div class="chat-body" id="chat1"></div>
                 <div class="chat-input">
-                    <button id="emoji-button" class="emoji-btn">
-                        <i class="far fa-smile"></i>
-                    </button>
-                    <div class="emoji-picker" id="emoji-picker"></div>
-                    <input type="text" id="message-input" placeholder="Type a message...">
-                    <button id="send-button">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
+                    <input type="text" id="message1" placeholder="Type a message...">
+                    <button id="send1">Send</button>
                 </div>
             </div>
 
-            <!-- Right Analytics Panel -->
-            <div class="analytics-panel">
-                <h3>Chat Analytics</h3>
-                <div class="stat-box">
-                    <h4>Messages</h4>
-                    <div id="message-count">0 messages</div>
+            <!-- User 2 Chat -->
+            <div class="user-chat">
+                <div class="chat-header">
+                    <div>
+                        <h3>User 2</h3>
+                        <div class="connection-status" id="user2-status">Disconnected</div>
+                    </div>
+                    <input type="text" id="username2" placeholder="Enter username">
+                    <button id="join2">Join Chat</button>
                 </div>
-                <div class="stat-box">
-                    <h4>Active Users</h4>
-                    <div id="active-users">0 users</div>
+                <div class="chat-body" id="chat2"></div>
+                <div class="chat-input">
+                    <input type="text" id="message2" placeholder="Type a message...">
+                    <button id="send2">Send</button>
                 </div>
-                <div class="stat-box">
-                    <h4>Response Time</h4>
-                    <div id="avg-response">0ms</div>
-                </div>
-                <h3>Event Log</h3>
-                <div id="event-log" class="log-container"></div>
             </div>
         </div>
     </div>
 
+    <!-- Info Panel -->
+    <div class="info-panel" id="info-panel">
+        <h2>Implementation Details</h2>
+        <div id="implementation-details"></div>
+    </div>
+
+    <button class="view-code-btn" onclick="toggleInfo()">
+        <i class="fas fa-code"></i>
+    </button>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Connect to chat namespace
-        const socket = io('http://13.236.156.205:3000/chat');
-        let currentRoom = null;
-        let currentUser = null;
-        let messageCount = 0;
-        let typingTimeout = null;
+        // Generate random room ID
+        const roomId = Math.random().toString(36).substring(7);
+        document.getElementById('room-id').textContent = roomId;
 
-        // Initialize chat state
-        const chatState = {
-            messages: [],
-            users: new Set(),
-            typing: new Set(),
-            analytics: {
-                messageCount: 0,
-                responseTime: []
+        // Create two socket connections
+        const socket1 = io('/chat');
+        const socket2 = io('/chat');
+        
+        let user1 = null;
+        let user2 = null;
+
+        // Setup User 1
+        document.getElementById('join1').addEventListener('click', () => {
+            const username = document.getElementById('username1').value;
+            if (username) {
+                user1 = username;
+                socket1.emit('userJoined', { name: username });
+                socket1.emit('joinRoom', roomId);
+                updateStatus('user1-status', 'Connected');
             }
-        };
+        });
 
-        // Add new message handler
-        function addMessage(message) {
+        // Setup User 2
+        document.getElementById('join2').addEventListener('click', () => {
+            const username = document.getElementById('username2').value;
+            if (username) {
+                user2 = username;
+                socket2.emit('userJoined', { name: username });
+                socket2.emit('joinRoom', roomId);
+                updateStatus('user2-status', 'Connected');
+            }
+        });
+
+        // Send message handlers
+        document.getElementById('send1').addEventListener('click', () => {
+            sendMessage(socket1, 'message1', user1, 'chat1', 'sent');
+        });
+
+        document.getElementById('send2').addEventListener('click', () => {
+            sendMessage(socket2, 'message2', user2, 'chat2', 'sent');
+        });
+
+        function sendMessage(socket, inputId, username, chatId, messageClass) {
+            const input = document.getElementById(inputId);
+            const message = input.value.trim();
+            
+            if (message && username) {
+                socket.emit('sendMessage', {
+                    roomId,
+                    message,
+                    user: username
+                });
+                
+                addMessageToChat(chatId, {
+                    user: username,
+                    message,
+                    timestamp: new Date()
+                }, messageClass);
+                
+                input.value = '';
+            }
+        }
+
+        // Message handling
+        function addMessageToChat(chatId, message, messageClass) {
+            const chat = document.getElementById(chatId);
             const messageEl = document.createElement('div');
-            messageEl.className = `message ${message.user === currentUser ? 'sent' : 'received'}`;
+            messageEl.className = `message ${messageClass}`;
             messageEl.innerHTML = `
                 <div class="message-header">
-                    <span class="message-user">${message.user}</span>
-                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                    <strong>${message.user}</strong>
+                    <small>${new Date(message.timestamp).toLocaleTimeString()}</small>
                 </div>
-                <div class="message-content">${message.message}</div>
+                <div>${message.message}</div>
             `;
-            document.getElementById('chat-messages').appendChild(messageEl);
-            messageEl.scrollIntoView({ behavior: 'smooth' });
-            
-            // Update analytics
-            updateAnalytics(message);
+            chat.appendChild(messageEl);
+            chat.scrollTop = chat.scrollHeight;
         }
 
-        // Update analytics
-        function updateAnalytics(message) {
-            chatState.analytics.messageCount++;
-            document.getElementById('message-count').textContent = 
-                `${chatState.analytics.messageCount} messages`;
-            
-            document.getElementById('active-users').textContent = 
-                `${chatState.users.size} users`;
-            
-            // Calculate average response time
-            if (chatState.analytics.responseTime.length > 0) {
-                const avg = chatState.analytics.responseTime.reduce((a, b) => a + b) / 
-                          chatState.analytics.responseTime.length;
-                document.getElementById('avg-response').textContent = 
-                    `${Math.round(avg)}ms`;
-            }
-        }
-
-        // Typing indicator
-        function updateTypingIndicator() {
-            const typing = Array.from(chatState.typing);
-            if (typing.length > 0) {
-                document.getElementById('typing-indicator').textContent = 
-                    `${typing.join(', ')} ${typing.length === 1 ? 'is' : 'are'} typing...`;
-            } else {
-                document.getElementById('typing-indicator').textContent = '';
-            }
-        }
-
-        // Event handlers
-        document.getElementById('message-input').addEventListener('input', () => {
-            if (currentRoom && currentUser) {
-                clearTimeout(typingTimeout);
-                socket.emit('typing', { room: currentRoom, user: currentUser });
-                typingTimeout = setTimeout(() => {
-                    socket.emit('stopTyping', { room: currentRoom, user: currentUser });
-                }, 1000);
-            }
-        });
-
-        // Socket event handlers
-        socket.on('connect', () => {
-            updateConnectionStatus(true);
-            addLogEntry('Connected', { socketId: socket.id });
-        });
-
-        socket.on('disconnect', () => {
-            updateConnectionStatus(false);
-            addLogEntry('Disconnected');
-        });
-
-        socket.on('newMessage', (message) => {
-            addMessage(message);
-            addLogEntry('Message Received', message);
-        });
-
-        socket.on('typing', (data) => {
-            chatState.typing.add(data.user);
-            updateTypingIndicator();
-        });
-
-        socket.on('stopTyping', (data) => {
-            chatState.typing.delete(data.user);
-            updateTypingIndicator();
-        });
-
-        socket.on('userJoined', (user) => {
-            chatState.users.add(user);
-            updateUserList();
-            addLogEntry('User Joined', { user });
-        });
-
-        socket.on('userLeft', (user) => {
-            chatState.users.delete(user);
-            updateUserList();
-            addLogEntry('User Left', { user });
-        });
-
-        // ... existing event handlers and utility functions ...
-
-        // Initialize emoji picker
-        function initializeEmojiPicker() {
-            const emojis = ['😀', '😂', '😊', '❤️', '👍', '🎉', '🔥', '✨'];
-            const picker = document.getElementById('emoji-picker');
-            
-            emojis.forEach(emoji => {
-                const button = document.createElement('button');
-                button.textContent = emoji;
-                button.onclick = () => {
-                    document.getElementById('message-input').value += emoji;
-                    picker.style.display = 'none';
-                };
-                picker.appendChild(button);
+        // Socket event listeners
+        [socket1, socket2].forEach((socket, index) => {
+            socket.on('newMessage', (message) => {
+                const isUser1 = index === 0;
+                const chatId = isUser1 ? 'chat1' : 'chat2';
+                const messageClass = message.user === (isUser1 ? user1 : user2) ? 'sent' : 'received';
+                addMessageToChat(chatId, message, messageClass);
             });
+        });
 
-            document.getElementById('emoji-button').onclick = () => {
-                picker.style.display = picker.style.display === 'none' ? 'grid' : 'none';
-            };
+        // Update status display
+        function updateStatus(elementId, status) {
+            const element = document.getElementById(elementId);
+            element.textContent = status;
+            element.className = `connection-status ${status.toLowerCase()}`;
         }
 
-        // Initialize the chat interface
-        initializeEmojiPicker();
+        // Implementation details
+        const implementationDetails = `
+            <h3>Frontend Implementation:</h3>
+            <pre>
+            1. Two separate Socket.IO connections for each user
+            2. Random room ID generation for chat room
+            3. Real-time message syncing between users
+            4. Message history storage
+            5. Connection status monitoring
+            </pre>
+
+            <h3>Backend Implementation:</h3>
+            <pre>
+            1. Socket.IO chat namespace
+            2. Redis message storage
+            3. Room-based message broadcasting
+            4. User presence tracking
+            5. Message history retrieval
+            </pre>
+
+            <h3>Key Features:</h3>
+            <pre>
+            - Real-time bidirectional communication
+            - Message persistence
+            - User status tracking
+            - Room-based chat
+            - Connection management
+            </pre>
+        `;
+
+        function toggleInfo() {
+            const panel = document.getElementById('info-panel');
+            panel.classList.toggle('open');
+            document.getElementById('implementation-details').innerHTML = implementationDetails;
+        }
+
+        // Enter key handlers
+        document.getElementById('message1').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('send1').click();
+        });
+
+        document.getElementById('message2').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('send2').click();
+        });
     </script>
 </body>
 </html>
