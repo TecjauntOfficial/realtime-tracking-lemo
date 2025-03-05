@@ -307,6 +307,20 @@ body {
     margin: 12px 0;
     display: none;
 }
+
+/* Add styling for direction information */
+.direction-info {
+    background-color: rgba(79, 70, 229, 0.1);
+    padding: 5px;
+    margin: 5px 0;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.direction-missing {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
 </style>
 <body>
     <div class="dashboard">
@@ -828,14 +842,36 @@ body {
                 filteredEvents.slice(-100).reverse().forEach(event => {
                     const card = document.createElement('div');
                     card.className = 'event-card';
-                    card.innerHTML = `
-                        <div class="event-header">
-                            <span class="event-type">${event.event}</span>
-                            <span class="event-time">${formatTime(event.timestamp)}</span>
-                        </div>
-                        <div>Socket: ${event.socketId}</div>
-                        <pre class="event-data">${JSON.stringify(event.data, null, 2)}</pre>
-                    `;
+                    
+                    // Format event data with special handling for direction
+                    let formattedData = JSON.stringify(event.data, null, 2);
+                    
+                    // Check if this is a location event and highlight direction
+                    if (event.event === 'locationUpdate' || event.event === 'driverLocation') {
+                        const directionInfo = event.data.direction ? 
+                            `<div class="direction-info">Direction: ${event.data.direction}</div>` : 
+                            '<div class="direction-info direction-missing">Direction: Not provided</div>';
+                        
+                        card.innerHTML = `
+                            <div class="event-header">
+                                <span class="event-type">${event.event}</span>
+                                <span class="event-time">${formatTime(event.timestamp)}</span>
+                            </div>
+                            <div>Socket: ${event.socketId}</div>
+                            ${directionInfo}
+                            <pre class="event-data">${formattedData}</pre>
+                        `;
+                    } else {
+                        card.innerHTML = `
+                            <div class="event-header">
+                                <span class="event-type">${event.event}</span>
+                                <span class="event-time">${formatTime(event.timestamp)}</span>
+                            </div>
+                            <div>Socket: ${event.socketId}</div>
+                            <pre class="event-data">${formattedData}</pre>
+                        `;
+                    }
+                    
                     logContainer.appendChild(card);
                 });
             }

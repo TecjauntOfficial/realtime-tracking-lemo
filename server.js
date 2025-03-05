@@ -85,10 +85,13 @@ io.on("connection", (socket) => {
         io.sockets.adapter.rooms.get(`ride:${driverId}`)?.size || 0
       );
 
+      // Ensure direction is never undefined in stored data
+      const directionValue = direction || null;
+
       // Save to Redis
       await redisClient.set(`driver:${driverId}`, JSON.stringify({ 
         location, 
-        direction,
+        direction: directionValue,
         lastUpdated: new Date().toISOString() 
       }));
 
@@ -96,7 +99,7 @@ io.on("connection", (socket) => {
       const roomName = `ride:${driverId}`;
       const result = io.to(roomName).emit("locationUpdate", {
         driverId,
-        direction,
+        direction: directionValue, // Ensure direction is included
         location,
         timestamp: new Date().toISOString(),
       });
@@ -109,14 +112,14 @@ io.on("connection", (socket) => {
         io.sockets.adapter.rooms.get(roomName)?.size || 0
       );
 
-      // Emit event to dashboard
+      // Emit event to dashboard with consistent direction parameter
       io.to("dashboard").emit("event", {
         direction: "sent",
         event: "locationUpdate",
         data: {
           driverId,
           location,
-          direction,
+          direction: directionValue, // Ensure direction is included
           timestamp: new Date().toISOString(),
         },
         socketId: socket.id,
