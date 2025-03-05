@@ -3,9 +3,22 @@ const io = require('socket.io-client');
 const socket = io('http://13.236.156.205:3000');
 
 function generateLocation(baseLocation) {
+    // Generate random location changes
+    const latChange = (Math.random() - 0.5) * 0.001;
+    const lngChange = (Math.random() - 0.5) * 0.001;
+    
+    // Determine direction based on changes
+    let direction;
+    if (Math.abs(latChange) > Math.abs(lngChange)) {
+        direction = latChange > 0 ? "NORTH" : "SOUTH";
+    } else {
+        direction = lngChange > 0 ? "EAST" : "WEST";
+    }
+    
     return {
-        latitude: baseLocation.latitude + (Math.random() - 0.5) * 0.001,
-        longitude: baseLocation.longitude + (Math.random() - 0.5) * 0.001
+        latitude: baseLocation.latitude + latChange,
+        longitude: baseLocation.longitude + lngChange,
+        direction: direction
     };
 }
 
@@ -27,22 +40,27 @@ socket.on('connect', () => {
 
 function sendLocationUpdate() {
     updateCount++;
-    const location = generateLocation(baseLocation);
+    const locationData = generateLocation(baseLocation);
     
     const updateData = {
         driverId,
-        location,
+        location: {
+            latitude: locationData.latitude,
+            longitude: locationData.longitude
+        },
+        direction: locationData.direction,
         updateCount
     };
     
     socket.emit('driverLocation', updateData);
-    console.log(`[${new Date().toISOString()}] Update #${updateCount} sent:`, location);
+    console.log(`[${new Date().toISOString()}] Update #${updateCount} sent:`, 
+        { location: updateData.location, direction: updateData.direction });
 }
 
 // Listen for broadcasts
-// In testClient.js
 socket.on('locationUpdate', (data) => {
-    console.log(`[${data.timestamp}] Received broadcast:`, data.location);
+    console.log(`[${data.timestamp}] Received broadcast:`, 
+        { location: data.location, direction: data.direction });
 });
 
 // Error handling

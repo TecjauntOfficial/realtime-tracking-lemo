@@ -70,7 +70,7 @@ io.on("connection", (socket) => {
   // Handle driver location updates
   socket.on("driverLocation", async (data) => {
     try {
-      const { driverId, location, updateCount } = data;
+      const { driverId, location, updateCount, direction } = data;
 
       // Log detailed update information
       console.log(
@@ -79,19 +79,25 @@ io.on("connection", (socket) => {
       console.log("Driver ID:", driverId);
       console.log("Update count:", updateCount);
       console.log("Location:", location);
+      console.log("Direction:", direction || "Not specified");
       console.log(
         "Connected sockets in room:",
         io.sockets.adapter.rooms.get(`ride:${driverId}`)?.size || 0
       );
 
       // Save to Redis
-      await redisClient.set(`driver:${driverId}`, JSON.stringify(location));
+      await redisClient.set(`driver:${driverId}`, JSON.stringify({ 
+        location, 
+        direction,
+        lastUpdated: new Date().toISOString() 
+      }));
 
       // Broadcast to specific room/channel
       const roomName = `ride:${driverId}`;
       const result = io.to(roomName).emit("locationUpdate", {
         driverId,
         location,
+        direction,
         timestamp: new Date().toISOString(),
       });
 
@@ -110,6 +116,7 @@ io.on("connection", (socket) => {
         data: {
           driverId,
           location,
+          direction,
           timestamp: new Date().toISOString(),
         },
         socketId: socket.id,
