@@ -307,30 +307,6 @@ body {
     margin: 12px 0;
     display: none;
 }
-
-/* Add styling for direction information */
-.direction-info {
-    background-color: rgba(79, 70, 229, 0.1);
-    padding: 5px;
-    margin: 5px 0;
-    border-radius: 4px;
-    font-weight: bold;
-}
-
-.direction-missing {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: var(--error);
-}
-
-.direction-null {
-    background-color: rgba(245, 158, 11, 0.1);
-    color: var(--warning);
-}
-
-.direction-empty {
-    background-color: rgba(209, 213, 219, 0.2);
-    color: var(--text);
-}
 </style>
 <body>
     <div class="dashboard">
@@ -600,16 +576,6 @@ body {
         });
 
         socket.on('event', (message) => {
-            // Add immediate direction inspection
-            if (message.event === 'locationUpdate' || message.event === 'driverLocation') {
-                console.log(`DEBUG - Received ${message.event}:`, {
-                    hasDirection: 'direction' in message.data,
-                    directionValue: message.data.direction,
-                    directionType: typeof message.data.direction,
-                    allKeys: Object.keys(message.data)
-                });
-            }
-            
             processEvent(message);
             updateDashboard();
         });
@@ -862,51 +828,14 @@ body {
                 filteredEvents.slice(-100).reverse().forEach(event => {
                     const card = document.createElement('div');
                     card.className = 'event-card';
-                    
-                    // Format event data with special handling for direction
-                    let formattedData = JSON.stringify(event.data, null, 2);
-                    
-                    // Check if this is a location event
-                    if (event.event === 'locationUpdate' || event.event === 'driverLocation') {
-                        // Deep inspection of data structure
-                        const debugInfo = `Type: ${typeof event.data}, Keys: ${event.data ? Object.keys(event.data).join(', ') : 'none'}`;
-                        
-                        // Use hasOwnProperty to properly check if direction exists in the object
-                        const hasDirectionProperty = event.data && 'direction' in event.data;
-                        const directionValue = hasDirectionProperty ? event.data.direction : undefined;
-                        
-                        let directionInfo = '';
-                        
-                        if (directionValue === null) {
-                            directionInfo = '<div class="direction-info direction-null">Direction: Null value</div>';
-                        } else if (directionValue === undefined) {
-                            directionInfo = `<div class="direction-info direction-missing">Direction: Not present in data (${debugInfo})</div>`;
-                        } else if (directionValue === '') {
-                            directionInfo = '<div class="direction-info direction-empty">Direction: Empty string</div>';
-                        } else {
-                            directionInfo = `<div class="direction-info">Direction: ${directionValue}</div>`;
-                        }
-                        
-                        card.innerHTML = `
-                            <div class="event-header">
-                                <span class="event-type">${event.event}</span>
-                                <span class="event-time">${formatTime(event.timestamp)}</span>
-                            </div>
-                            <div>Socket: ${event.socketId}</div>
-                            ${directionInfo}
-                            <pre class="event-data">${formattedData}</pre>
-                        `;
-                    } else {
-                        card.innerHTML = `
-                            <div class="event-header">
-                                <span class="event-type">${event.event}</span>
-                                <span class="event-time">${formatTime(event.timestamp)}</span>
-                            </div>
-                            <div>Socket: ${event.socketId}</div>
-                            <pre class="event-data">${formattedData}</pre>
-                        `;
-                    }
-                    
+                    card.innerHTML = `
+                        <div class="event-header">
+                            <span class="event-type">${event.event}</span>
+                            <span class="event-time">${formatTime(event.timestamp)}</span>
+                        </div>
+                        <div>Socket: ${event.socketId}</div>
+                        <pre class="event-data">${JSON.stringify(event.data, null, 2)}</pre>
+                    `;
                     logContainer.appendChild(card);
                 });
             }
