@@ -85,8 +85,8 @@ io.on("connection", (socket) => {
         io.sockets.adapter.rooms.get(`ride:${driverId}`)?.size || 0
       );
 
-      // Ensure direction is never undefined in stored data
-      const directionValue = direction || null;
+      // Ensure direction is never undefined in stored data - use empty string instead of null
+      const directionValue = direction || "";
 
       // Save to Redis
       await redisClient.set(`driver:${driverId}`, JSON.stringify({ 
@@ -95,34 +95,38 @@ io.on("connection", (socket) => {
         lastUpdated: new Date().toISOString() 
       }));
 
-      // Create the location update data with explicit direction property
+      // Create a fresh object for the location update to avoid reference issues
       const locationUpdateData = {
-        driverId,
-        direction: directionValue, // Explicitly include direction
-        location,
+        driverId: driverId,
+        direction: directionValue, // Explicitly include direction 
+        location: {...location},   // Clone the location object
         timestamp: new Date().toISOString(),
       };
 
-      // Log what we're actually emitting
-      console.log("Emitting locationUpdate data:", locationUpdateData);
+      // Debug what we're about to send
+      console.log("DEBUG - locationUpdate data about to be emitted:", JSON.stringify(locationUpdateData));
 
       // Broadcast to specific room/channel
       const roomName = `ride:${driverId}`;
-      const result = io.to(roomName).emit("locationUpdate", locationUpdateData);
+      io.to(roomName).emit("locationUpdate", locationUpdateData);
 
-      // Log broadcast results
-      console.log("Broadcast result:", result);
+      // Double-check what was sent
       console.log("Room name:", roomName);
       console.log(
         "Sockets in room:",
         io.sockets.adapter.rooms.get(roomName)?.size || 0
       );
 
-      // Emit event to dashboard with consistent direction parameter
+      // Emit event to dashboard - create a fresh object to avoid reference issues
       io.to("dashboard").emit("event", {
         direction: "sent",
         event: "locationUpdate",
-        data: locationUpdateData, // Use the same object for consistency
+        data: {
+          driverId: driverId,
+          location: {...location},
+          direction: directionValue,  // Explicitly include direction
+          timestamp: new Date().toISOString(),
+        },
         socketId: socket.id,
         timestamp: new Date().toISOString(),
       });

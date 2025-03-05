@@ -600,6 +600,16 @@ body {
         });
 
         socket.on('event', (message) => {
+            // Add immediate direction inspection
+            if (message.event === 'locationUpdate' || message.event === 'driverLocation') {
+                console.log(`DEBUG - Received ${message.event}:`, {
+                    hasDirection: 'direction' in message.data,
+                    directionValue: message.data.direction,
+                    directionType: typeof message.data.direction,
+                    allKeys: Object.keys(message.data)
+                });
+            }
+            
             processEvent(message);
             updateDashboard();
         });
@@ -858,9 +868,11 @@ body {
                     
                     // Check if this is a location event
                     if (event.event === 'locationUpdate' || event.event === 'driverLocation') {
+                        // Deep inspection of data structure
+                        const debugInfo = `Type: ${typeof event.data}, Keys: ${event.data ? Object.keys(event.data).join(', ') : 'none'}`;
+                        
                         // Use hasOwnProperty to properly check if direction exists in the object
-                        // This handles null, undefined, and missing property cases
-                        const hasDirectionProperty = event.data && Object.prototype.hasOwnProperty.call(event.data, 'direction');
+                        const hasDirectionProperty = event.data && 'direction' in event.data;
                         const directionValue = hasDirectionProperty ? event.data.direction : undefined;
                         
                         let directionInfo = '';
@@ -868,7 +880,7 @@ body {
                         if (directionValue === null) {
                             directionInfo = '<div class="direction-info direction-null">Direction: Null value</div>';
                         } else if (directionValue === undefined) {
-                            directionInfo = '<div class="direction-info direction-missing">Direction: Not present in data</div>';
+                            directionInfo = `<div class="direction-info direction-missing">Direction: Not present in data (${debugInfo})</div>`;
                         } else if (directionValue === '') {
                             directionInfo = '<div class="direction-info direction-empty">Direction: Empty string</div>';
                         } else {
