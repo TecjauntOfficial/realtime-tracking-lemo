@@ -321,6 +321,16 @@ body {
     background-color: rgba(239, 68, 68, 0.1);
     color: var(--error);
 }
+
+.direction-null {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.direction-empty {
+    background-color: rgba(209, 213, 219, 0.2);
+    color: var(--text);
+}
 </style>
 <body>
     <div class="dashboard">
@@ -846,11 +856,24 @@ body {
                     // Format event data with special handling for direction
                     let formattedData = JSON.stringify(event.data, null, 2);
                     
-                    // Check if this is a location event and highlight direction
+                    // Check if this is a location event
                     if (event.event === 'locationUpdate' || event.event === 'driverLocation') {
-                        const directionInfo = event.data.direction ? 
-                            `<div class="direction-info">Direction: ${event.data.direction}</div>` : 
-                            '<div class="direction-info direction-missing">Direction: Not provided</div>';
+                        // Use hasOwnProperty to properly check if direction exists in the object
+                        // This handles null, undefined, and missing property cases
+                        const hasDirectionProperty = event.data && Object.prototype.hasOwnProperty.call(event.data, 'direction');
+                        const directionValue = hasDirectionProperty ? event.data.direction : undefined;
+                        
+                        let directionInfo = '';
+                        
+                        if (directionValue === null) {
+                            directionInfo = '<div class="direction-info direction-null">Direction: Null value</div>';
+                        } else if (directionValue === undefined) {
+                            directionInfo = '<div class="direction-info direction-missing">Direction: Not present in data</div>';
+                        } else if (directionValue === '') {
+                            directionInfo = '<div class="direction-info direction-empty">Direction: Empty string</div>';
+                        } else {
+                            directionInfo = `<div class="direction-info">Direction: ${directionValue}</div>`;
+                        }
                         
                         card.innerHTML = `
                             <div class="event-header">

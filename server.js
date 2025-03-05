@@ -95,14 +95,20 @@ io.on("connection", (socket) => {
         lastUpdated: new Date().toISOString() 
       }));
 
-      // Broadcast to specific room/channel
-      const roomName = `ride:${driverId}`;
-      const result = io.to(roomName).emit("locationUpdate", {
+      // Create the location update data with explicit direction property
+      const locationUpdateData = {
         driverId,
-        direction: directionValue, // Ensure direction is included
+        direction: directionValue, // Explicitly include direction
         location,
         timestamp: new Date().toISOString(),
-      });
+      };
+
+      // Log what we're actually emitting
+      console.log("Emitting locationUpdate data:", locationUpdateData);
+
+      // Broadcast to specific room/channel
+      const roomName = `ride:${driverId}`;
+      const result = io.to(roomName).emit("locationUpdate", locationUpdateData);
 
       // Log broadcast results
       console.log("Broadcast result:", result);
@@ -116,12 +122,7 @@ io.on("connection", (socket) => {
       io.to("dashboard").emit("event", {
         direction: "sent",
         event: "locationUpdate",
-        data: {
-          driverId,
-          location,
-          direction: directionValue, // Ensure direction is included
-          timestamp: new Date().toISOString(),
-        },
+        data: locationUpdateData, // Use the same object for consistency
         socketId: socket.id,
         timestamp: new Date().toISOString(),
       });
