@@ -85,29 +85,18 @@ io.on("connection", (socket) => {
         io.sockets.adapter.rooms.get(`ride:${driverId}`)?.size || 0
       );
 
-      // Ensure direction has a valid value, default to empty object if undefined
-      const validDirection = direction || {};
-      
-      // Save to Redis with validated direction
+      // Save to Redis
       await redisClient.set(`driver:${driverId}`, JSON.stringify({ 
         location,
-        direction: validDirection,
+        direction,
         lastUpdated: new Date().toISOString() 
       }));
 
-      // Broadcast to specific room/channel with validated direction
+      // Broadcast to specific room/channel
       const roomName = `ride:${driverId}`;
       const result = io.to(roomName).emit("locationUpdate", {
         driverId,
-        direction: validDirection,
-        location,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Log the exact payload being sent
-      console.log("LocationUpdate payload:", {
-        driverId,
-        direction: validDirection,
+        direction,
         location,
         timestamp: new Date().toISOString(),
       });
@@ -127,7 +116,7 @@ io.on("connection", (socket) => {
         data: {
           driverId,
           location,
-          direction: validDirection,
+          direction,
           timestamp: new Date().toISOString(),
         },
         socketId: socket.id,
