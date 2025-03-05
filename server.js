@@ -70,56 +70,55 @@ io.on("connection", (socket) => {
   // Handle driver location updates
   socket.on("driverLocation", async (data) => {
     try {
-      const { driverId, location, updateCount, direction } = data;
+      // Extract all parameters explicitly
+      const driverId = data.driverId;
+      const location = data.location;
+      const updateCount = data.updateCount;
+      const direction = data.direction;  // Ensure we capture this
 
-      // Log detailed update information
-      console.log(
-        `\n[${new Date().toISOString()}] Processing location update:`
-      );
+      // Log the incoming data including direction
+      console.log(`\n[${new Date().toISOString()}] Processing location update:`);
+      console.log("Raw data received:", JSON.stringify(data));
       console.log("Driver ID:", driverId);
       console.log("Update count:", updateCount);
       console.log("Location:", location);
-      console.log("Direction:", direction || "Not specified");
+      console.log("Direction:", direction);
       console.log(
         "Connected sockets in room:",
         io.sockets.adapter.rooms.get(`ride:${driverId}`)?.size || 0
       );
 
-      // Save to Redis
+      // Save to Redis with all parameters
       await redisClient.set(`driver:${driverId}`, JSON.stringify({ 
         location, 
         direction,
+        updateCount,
         lastUpdated: new Date().toISOString() 
       }));
 
-      // Fix the locationUpdate event structure to ensure direction is properly included
+      // Create a completely new object for the broadcast
       const timestamp = new Date().toISOString();
-      const locationUpdateData = {
-        driverId,
-        location,
-        direction,  // Make sure direction is included
-        timestamp
+      const updatePayload = {
+        driverId: driverId,
+        location: location,
+        direction: direction,  // Explicitly include direction
+        timestamp: timestamp,
+        updateCount: updateCount
       };
+
+      console.log("Emitting locationUpdate with payload:", JSON.stringify(updatePayload));
 
       // Broadcast to specific room/channel
       const roomName = `ride:${driverId}`;
-      io.to(roomName).emit("locationUpdate", locationUpdateData);
+      io.to(roomName).emit("locationUpdate", updatePayload);
 
-      // Log broadcast data for debugging
-      console.log("Broadcasting locationUpdate:", JSON.stringify(locationUpdateData));
-
-      // Emit event to dashboard
+      // Also emit to dashboard with the same structure
       io.to("dashboard").emit("event", {
         direction: "sent",
         event: "locationUpdate",
-        data: {
-          driverId,
-          location,
-          direction,
-          timestamp: new Date().toISOString(),
-        },
+        data: updatePayload,
         socketId: socket.id,
-        timestamp: new Date().toISOString(),
+        timestamp: timestamp
       });
     } catch (error) {
       console.error("Error handling location update:", error);

@@ -11,28 +11,38 @@ socket.on('connect', () => {
     socket.emit('trackDriver', testDriverId);
     console.log(`Tracking driver: ${testDriverId}`);
     
-    // Send test location update with direction
+    // Send initial test location update with direction
     sendTestLocation(testDriverId);
+    
+    // Then send updates every 2 seconds
+    setInterval(() => sendTestLocation(testDriverId), 2000);
 });
 
+let updateCount = 0;
+const directions = ["NORTH", "EAST", "SOUTH", "WEST", "NORTH-EAST", "SOUTH-EAST", "SOUTH-WEST", "NORTH-WEST"];
+
 function sendTestLocation(driverId) {
+    updateCount++;
+    const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+    
     const testLocation = {
         driverId,
         location: {
-            latitude: 31.5314625,
-            longitude: 74.3528142
+            latitude: 31.5314625 + (Math.random() * 0.01 - 0.005),
+        longitude: 74.3528142 + (Math.random() * 0.01 - 0.005)
         },
-        direction: "NORTH-EAST",
-        updateCount: 1
+        direction: randomDirection,
+        updateCount: updateCount
     };
     
-    console.log('Sending driverLocation with direction:', testLocation.direction);
+    console.log(`\nSending update #${updateCount} with direction: ${randomDirection}`);
     socket.emit('driverLocation', testLocation);
 }
 
 // Listen for location updates
 socket.on('locationUpdate', (data) => {
     console.log('\nReceived locationUpdate:');
+    console.log(`Update #${data.updateCount || 'unknown'}`);
     console.log('- Driver ID:', data.driverId);
     console.log('- Direction:', data.direction);
     console.log('- Location:', data.location);
