@@ -92,22 +92,21 @@ io.on("connection", (socket) => {
         lastUpdated: new Date().toISOString() 
       }));
 
-      // Broadcast to specific room/channel
-      const roomName = `ride:${driverId}`;
-      const result = io.to(roomName).emit("locationUpdate", {
+      // Fix the locationUpdate event structure to ensure direction is properly included
+      const timestamp = new Date().toISOString();
+      const locationUpdateData = {
         driverId,
         location,
-        direction,
-        timestamp: new Date().toISOString(),
-      });
+        direction,  // Make sure direction is included
+        timestamp
+      };
 
-      // Log broadcast results
-      console.log("Broadcast result:", result);
-      console.log("Room name:", roomName);
-      console.log(
-        "Sockets in room:",
-        io.sockets.adapter.rooms.get(roomName)?.size || 0
-      );
+      // Broadcast to specific room/channel
+      const roomName = `ride:${driverId}`;
+      io.to(roomName).emit("locationUpdate", locationUpdateData);
+
+      // Log broadcast data for debugging
+      console.log("Broadcasting locationUpdate:", JSON.stringify(locationUpdateData));
 
       // Emit event to dashboard
       io.to("dashboard").emit("event", {
